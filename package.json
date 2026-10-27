@@ -1,0 +1,31 @@
+{
+  "name": "unpause",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Unpause — Course Final Project MVP for solo developers to resume projects with scope-linked decision records",
+  "workspaces": [
+    "apps/api",
+    "apps/web"
+  ],
+  "scripts": {
+    "dev:api": "node scripts/run-go.mjs run ./cmd/server",
+    "dev:api:node": "npm --workspace=apps/api run dev",
+    "dev:web": "npm --workspace=apps/web run dev",
+    "dev": "node scripts/dev.mjs",
+    "build:api": "node scripts/run-go.mjs build -o bin/server ./cmd/server && node scripts/run-go.mjs build -o bin/migrate ./cmd/migrate && node scripts/run-go.mjs build -o bin/seed ./cmd/seed",
+    "build:api:node": "npm --workspace=apps/api run build",
+    "build:web": "npm --workspace=apps/web run build",
+    "build": "npm run build:api && npm run build:web",
+    "test:api": "node scripts/run-go.mjs test -v ./tests/...",
+    "test:api:node": "npm --workspace=apps/api run test",
+    "test:web": "npm --workspace=apps/web run test",
+    "test": "npm run test:api && npm run test:web",
+    "db:migrate:dev": "node scripts/run-go.mjs run ./cmd/migrate up",
+    "db:migrate:deploy": "node scripts/run-go.mjs run ./cmd/migrate up",
+    "db:migrate:status": "node scripts/run-go.mjs run ./cmd/migrate status",
+    "db:seed": "node scripts/run-go.mjs run ./cmd/seed"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

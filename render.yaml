@@ -1,0 +1,48 @@
+databases:
+  - name: unpause-postgres
+    databaseName: unpause
+    user: unpause
+    plan: free
+
+services:
+  - type: web
+    name: unpause-api
+    runtime: go
+    rootDir: apps/api-go
+    plan: free
+    buildCommand: go build -o bin/server ./cmd/server && go build -o bin/migrate ./cmd/migrate
+    preDeployCommand: ./bin/migrate up
+    startCommand: ./bin/server
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: unpause-postgres
+          property: connectionString
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: SESSION_COOKIE_NAME
+        value: unpause_sid
+      - key: SESSION_TTL_HOURS
+        value: 168
+      - key: CORS_ORIGINS
+        sync: false
+      - key: GITHUB_API_BASE_URL
+        value: https://api.github.com
+
+  - type: web
+    name: unpause-web
+    runtime: static
+    buildCommand: npm install && npm run build:web
+    staticPublishPath: apps/web/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_BASE_URL
+        sync: false

@@ -1,0 +1,129 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ProjectStatus {
+  Active
+  Archived
+}
+
+enum IssueStatus {
+  Open
+  InProgress @map("In Progress")
+  Closed
+}
+
+enum IssuePriority {
+  High
+  Medium
+  Low
+}
+
+enum ScopeImpact {
+  None
+  Expands
+  Narrows
+  ChangesDirection @map("Changes direction")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  displayName  String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  sessions     Session[]
+  projects     Project[]
+}
+
+model Session {
+  id        String   @id
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Project {
+  id              String           @id @default(uuid())
+  userId          String
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name            String
+  description     String?
+  status          ProjectStatus    @default(Active)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  scopeVersions   ScopeVersion[]
+  issues          Issue[]
+  decisionRecords DecisionRecord[]
+
+  @@index([userId, status])
+  @@index([userId, updatedAt])
+}
+
+model ScopeVersion {
+  id              String           @id @default(uuid())
+  projectId       String
+  project         Project          @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  versionNumber   Int
+  problem         String
+  targetUsers     String
+  goal            String
+  inScope         String
+  outOfScope      String
+  reasonForChange String
+  createdAt       DateTime         @default(now())
+  decisionRecords DecisionRecord[]
+
+  @@unique([projectId, versionNumber])
+  @@index([projectId, versionNumber])
+}
+
+model Issue {
+  id              String           @id @default(uuid())
+  projectId       String
+  project         Project          @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  title           String
+  description     String?
+  status          IssueStatus      @default(Open)
+  priority        IssuePriority    @default(Medium)
+  nextAction      String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  decisionRecords DecisionRecord[]
+
+  @@index([projectId, status, priority, updatedAt])
+}
+
+model DecisionRecord {
+  id                     String       @id @default(uuid())
+  projectId              String
+  project                Project      @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  scopeVersionId         String
+  scopeVersion           ScopeVersion @relation(fields: [scopeVersionId], references: [id], onDelete: Restrict)
+  issueId                String?
+  issue                  Issue?       @relation(fields: [issueId], references: [id], onDelete: SetNull)
+  problem                String
+  decision               String
+  rationale              String
+  alternativesConsidered String?
+  outcome                String?
+  scopeImpact            ScopeImpact  @default(None)
+  isPinned               Boolean      @default(false)
+  pinnedAt               DateTime?
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @default(now())
+
+  @@index([projectId, scopeVersionId])
+  @@index([projectId, isPinned])
+  @@index([projectId, createdAt])
+}
