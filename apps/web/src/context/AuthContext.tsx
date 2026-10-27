@@ -1,5 +1,6 @@
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { onUnauthorizedResponse } from '../api/client';
 import { authApi } from '../api/endpoints';
 import type { User } from '../types/api';
 
@@ -17,6 +18,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    return onUnauthorizedResponse(() => {
+      const currentAuth = queryClient.getQueryData<{ user: User } | null>([
+        'auth',
+        'me',
+      ]);
+      if (currentAuth?.user) {
+        queryClient.setQueryData(['auth', 'me'], null);
+      }
+    });
+  }, [queryClient]);
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['auth', 'me'],

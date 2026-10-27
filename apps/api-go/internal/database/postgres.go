@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
@@ -53,10 +54,16 @@ func NewPool(ctx context.Context, rawDatabaseURL string) (*pgxpool.Pool, error) 
 
 	if maxConns > 0 {
 		poolConfig.MaxConns = maxConns
+	} else if IsLocalPGliteActive() {
+		poolConfig.MaxConns = 1
 	} else {
 		poolConfig.MaxConns = 10
 	}
 	poolConfig.MaxConnIdleTime = 5 * time.Minute
+	// Use unnamed prepared statements in the extended query protocol so that
+	// connection recycling after MaxConnIdleTime (or behind connection poolers / PGlite)
+	// never fails with SQLSTATE 42P05 (prepared statement "stmtcache_..." already exists).
+	poolConfig.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeExec
 
 	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {

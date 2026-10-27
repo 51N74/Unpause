@@ -3,6 +3,16 @@ import type { ParsedApiError } from '../types/api';
 
 const baseURL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
+type UnauthorizedListener = () => void;
+const unauthorizedListeners = new Set<UnauthorizedListener>();
+
+export function onUnauthorizedResponse(listener: UnauthorizedListener): () => void {
+  unauthorizedListeners.add(listener);
+  return () => {
+    unauthorizedListeners.delete(listener);
+  };
+}
+
 export const apiClient = axios.create({
   baseURL,
   withCredentials: true,
@@ -12,6 +22,26 @@ export const apiClient = axios.create({
   },
   timeout: 15000,
 });
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error: unknown) => {
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      const requestUrl = error.config?.url || '';
+      const isPublicAuthAttempt =
+        requestUrl.includes('/auth/login') ||
+        requestUrl.includes('/auth/register') ||
+        requestUrl.includes('/auth/logout');
+
+      if (!isPublicAuthAttempt) {
+        for (const listener of unauthorizedListeners) {
+          listener();
+        }
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 export function extractApiError(err: unknown): ParsedApiError {
   if (axios.isAxiosError(err)) {
