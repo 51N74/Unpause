@@ -72,17 +72,14 @@ func (s *Service) List(ctx context.Context, userID, projectID string) (*ScopeVer
 	return currentScope, versions, nil
 }
 
+// VerifyOwnership checks that projectID exists and belongs to userID.
+func (s *Service) VerifyOwnership(ctx context.Context, userID, projectID string) error {
+	_, err := shared.VerifyProjectOwnership(ctx, s.pool, userID, projectID, false)
+	return err
+}
+
 // Create inserts a new immutable Scope Version with the next sequential versionNumber in a transaction.
 func (s *Service) Create(ctx context.Context, userID, projectID string, input CreateScopeVersionInput) (ScopeVersionResponse, error) {
-	info, err := shared.VerifyProjectOwnership(ctx, s.pool, userID, projectID, true)
-	if err != nil {
-		return ScopeVersionResponse{}, err
-	}
-
-	nextVersion := info.CurrentVersionNumber + 1
-	now := time.Now().UTC()
-	scopeID := uuid.NewString()
-
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return ScopeVersionResponse{}, err
@@ -90,6 +87,36 @@ func (s *Service) Create(ctx context.Context, userID, projectID string, input Cr
 	defer func() {
 		_ = tx.Rollback(ctx)
 	}()
+
+	var status string
+	err = tx.QueryRow(
+		ctx,
+		`SELECT "status"::text FROM "Project" WHERE "id" = $1 AND "userId" = $2 FOR UPDATE`,
+		projectID, userID,
+	).Scan(&status)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return ScopeVersionResponse{}, shared.NewNotFoundError("Project not found")
+	}
+	if err != nil {
+		return ScopeVersionResponse{}, err
+	}
+	if status == "Archived" {
+		return ScopeVersionResponse{}, shared.NewProjectArchivedError()
+	}
+
+	var currentVersion int
+	err = tx.QueryRow(
+		ctx,
+		`SELECT COALESCE(MAX("versionNumber"), 0) FROM "ScopeVersion" WHERE "projectId" = $1`,
+		projectID,
+	).Scan(&currentVersion)
+	if err != nil {
+		return ScopeVersionResponse{}, err
+	}
+
+	nextVersion := currentVersion + 1
+	now := time.Now().UTC()
+	scopeID := uuid.NewString()
 
 	var sv ScopeVersion
 	err = tx.QueryRow(

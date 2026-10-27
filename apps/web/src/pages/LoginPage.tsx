@@ -50,6 +50,10 @@ export const LoginPage: React.FC = () => {
   const loginMutation = useMutation({
     mutationFn: (values: LoginFormValues) => authApi.login(values),
     onSuccess: (data) => {
+      queryClient.removeQueries({
+        predicate: (query) =>
+          !(query.queryKey[0] === 'auth' && query.queryKey[1] === 'me'),
+      });
       queryClient.setQueryData(['auth', 'me'], data);
       navigate('/projects', { replace: true });
     },

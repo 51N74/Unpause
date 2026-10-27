@@ -69,7 +69,7 @@ describe('Unpause Web Utilities & Components', () => {
       },
     });
 
-    // Seed cached user as if logged in
+    // Seed cached user and cached project data as if logged in
     queryClient.setQueryData(['auth', 'me'], {
       user: {
         id: 'user-1',
@@ -78,6 +78,9 @@ describe('Unpause Web Utilities & Components', () => {
         createdAt: '2026-10-27T00:00:00.000Z',
         updatedAt: '2026-10-27T00:00:00.000Z',
       },
+    });
+    queryClient.setQueryData(['projects'], {
+      projects: [{ id: 'proj-user-1', name: 'Private Project' }],
     });
 
     const meSpy = vi.spyOn(authApi, 'me').mockResolvedValue({
@@ -130,6 +133,9 @@ describe('Unpause Web Utilities & Components', () => {
     await waitFor(() => {
       expect(screen.getByText('Sign in to Unpause')).toBeInTheDocument();
     });
+
+    // Verify cached project data from the previous session was cleared on 401
+    expect(queryClient.getQueryData(['projects'])).toBeUndefined();
 
     meSpy.mockRestore();
     listSpy.mockRestore();

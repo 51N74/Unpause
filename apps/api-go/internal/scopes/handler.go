@@ -80,7 +80,15 @@ func (h *Handler) GetByID(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"scopeVersion": sv})
 }
 
-// RejectImmutable responds with 405 SCOPE_VERSION_IMMUTABLE for any attempt to update or delete a Scope Version.
+// RejectImmutable verifies project ownership first, then responds with 405 SCOPE_VERSION_IMMUTABLE
+// for any attempt to update or delete a Scope Version.
 func (h *Handler) RejectImmutable(c *gin.Context) {
+	userID := middleware.GetAuthenticatedUserID(c)
+	projectID := c.Param("projectId")
+
+	if err := h.service.VerifyOwnership(c.Request.Context(), userID, projectID); err != nil {
+		middleware.RespondError(c, err)
+		return
+	}
 	middleware.RespondError(c, shared.NewScopeVersionImmutableError())
 }

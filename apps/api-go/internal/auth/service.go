@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/westride/unpause/api-go/internal/shared"
 )
@@ -96,8 +97,14 @@ func (s *Service) Register(ctx context.Context, email, password, displayName str
 		userID, email, passwordHash, finalDisplayName, now, now,
 	).Scan(&user.ID, &user.Email, &user.PasswordHash, &user.DisplayName, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return UserResponse{}, "", shared.NewConflictError("An account with this email already exists.", nil)
+		}
 		return UserResponse{}, "", err
 	}
+
+	_, _ = tx.Exec(ctx, `DELETE FROM "Session" WHERE "expiresAt" <= $1`, now)
 
 	_, err = tx.Exec(
 		ctx,
@@ -144,6 +151,8 @@ func (s *Service) Login(ctx context.Context, email, password string) (UserRespon
 	}
 	now := time.Now().UTC()
 	expiresAt := s.sessionExpiry()
+
+	_, _ = s.pool.Exec(ctx, `DELETE FROM "Session" WHERE "expiresAt" <= $1`, now)
 
 	_, err = s.pool.Exec(
 		ctx,

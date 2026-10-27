@@ -27,6 +27,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       ]);
       if (currentAuth?.user) {
         queryClient.setQueryData(['auth', 'me'], null);
+        queryClient.removeQueries({
+          predicate: (query) =>
+            !(query.queryKey[0] === 'auth' && query.queryKey[1] === 'me'),
+        });
       }
     });
   }, [queryClient]);
@@ -40,15 +44,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const logoutMutation = useMutation({
     mutationFn: () => authApi.logout(),
-    onSuccess: () => {
-      queryClient.setQueryData(['auth', 'me'], null);
-      queryClient.removeQueries({ queryKey: ['projects'] });
-      queryClient.clear();
-    },
   });
 
   const logout = async () => {
-    await logoutMutation.mutateAsync();
+    try {
+      await logoutMutation.mutateAsync();
+    } finally {
+      queryClient.setQueryData(['auth', 'me'], null);
+      queryClient.removeQueries({
+        predicate: (query) =>
+          !(query.queryKey[0] === 'auth' && query.queryKey[1] === 'me'),
+      });
+    }
   };
 
   return (

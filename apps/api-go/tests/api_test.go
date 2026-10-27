@@ -915,6 +915,7 @@ func Test3_CoreDomainDatabaseIntegrityAndOwnershipIsolation(t *testing.T) {
 			{http.MethodGet, fmt.Sprintf("/api/v1/projects/%s/resume-context", projectAId), nil},
 			{http.MethodGet, fmt.Sprintf("/api/v1/projects/%s/timeline", projectAId), nil},
 			{http.MethodGet, fmt.Sprintf("/api/v1/projects/%s/scope-versions", projectAId), nil},
+			{http.MethodDelete, fmt.Sprintf("/api/v1/projects/%s/scope-versions/%s", projectAId, scopeV1Id), nil},
 			{http.MethodGet, fmt.Sprintf("/api/v1/projects/%s/issues", projectAId), nil},
 			{http.MethodPatch, fmt.Sprintf("/api/v1/projects/%s/issues/%s", projectAId, issueLowId), map[string]any{"title": "Hack"}},
 			{http.MethodGet, fmt.Sprintf("/api/v1/projects/%s/decisions", projectAId), nil},
@@ -927,6 +928,66 @@ func Test3_CoreDomainDatabaseIntegrityAndOwnershipIsolation(t *testing.T) {
 			if resp.StatusCode != http.StatusNotFound {
 				t.Fatalf("expected 404 NOT_FOUND for userB on %s %s, got %d: %v", chk.method, chk.path, resp.StatusCode, body)
 			}
+		}
+	})
+
+	t.Run("restores full project, scope versions, issues, and decisions across logout and re-login while isolating User B's new project", func(t *testing.T) {
+		// User B creates their own project
+		bCreateResp, bCreateBody := userB.request(http.MethodPost, "/api/v1/projects", map[string]any{
+			"name":        "User B Private Project",
+			"description": "Owned exclusively by User B.",
+			"initialScope": map[string]any{
+				"problem":     "User B problem",
+				"targetUsers": "User B target",
+				"goal":        "User B goal",
+				"inScope":     "User B in-scope",
+				"outOfScope":  "User B out-of-scope",
+			},
+		}, nil)
+		if bCreateResp.StatusCode != http.StatusCreated {
+			t.Fatalf("expected 201 creating User B project, got %d: %v", bCreateResp.StatusCode, bCreateBody)
+		}
+
+		// User A logs out
+		logoutResp, _ := userA.request(http.MethodPost, "/api/v1/auth/logout", nil, nil)
+		if logoutResp.StatusCode != http.StatusOK {
+			t.Fatalf("expected 200 on User A logout, got %d", logoutResp.StatusCode)
+		}
+
+		// Verify User A cannot access projects while logged out
+		unauthResp, _ := userA.request(http.MethodGet, "/api/v1/projects", nil, nil)
+		if unauthResp.StatusCode != http.StatusUnauthorized {
+			t.Fatalf("expected 401 on /projects after logout, got %d", unauthResp.StatusCode)
+		}
+
+		// User A logs back in on a fresh client session
+		userARelogin := newTestClient(t)
+		reloginResp, _ := userARelogin.request(http.MethodPost, "/api/v1/auth/login", map[string]any{
+			"email":    "usera@unpause.test",
+			"password": "Password123!",
+		}, nil)
+		if reloginResp.StatusCode != http.StatusOK {
+			t.Fatalf("expected 200 on User A re-login, got %d", reloginResp.StatusCode)
+		}
+
+		// Verify User A's project list contains only User A's project (and not User B's project)
+		aListResp, aListBody := userARelogin.request(http.MethodGet, "/api/v1/projects?status=All", nil, nil)
+		if aListResp.StatusCode != http.StatusOK {
+			t.Fatalf("expected 200 listing User A projects after re-login, got %d", aListResp.StatusCode)
+		}
+		aProjects := aListBody["projects"].([]any)
+		if len(aProjects) != 1 || aProjects[0].(map[string]any)["id"] != projectAId {
+			t.Fatalf("expected User A to see only projectAId (%s), got %v", projectAId, aProjects)
+		}
+
+		// Verify User A's Scope Timeline still has both Scope v1 and Scope v2 and their historical decisions
+		tlResp, tlBody := userARelogin.request(http.MethodGet, fmt.Sprintf("/api/v1/projects/%s/timeline", projectAId), nil, nil)
+		if tlResp.StatusCode != http.StatusOK {
+			t.Fatalf("expected 200 on timeline after re-login, got %d", tlResp.StatusCode)
+		}
+		versions := tlBody["versions"].([]any)
+		if len(versions) != 2 {
+			t.Fatalf("expected 2 scope versions restored after re-login, got %d", len(versions))
 		}
 	})
 }

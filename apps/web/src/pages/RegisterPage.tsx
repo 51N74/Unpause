@@ -59,6 +59,10 @@ export const RegisterPage: React.FC = () => {
   const registerMutation = useMutation({
     mutationFn: (values: RegisterFormValues) => authApi.register(values),
     onSuccess: (data) => {
+      queryClient.removeQueries({
+        predicate: (query) =>
+          !(query.queryKey[0] === 'auth' && query.queryKey[1] === 'me'),
+      });
       queryClient.setQueryData(['auth', 'me'], data);
       navigate('/projects', { replace: true });
     },
