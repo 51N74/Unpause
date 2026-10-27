@@ -18,7 +18,8 @@ function resolveGoBinary() {
 
   const candidates = [
     '/usr/local/go/bin/go',
-      '/home/jptns/.gemini/antigravity/brain/29a3814e-7081-4cc2-ad46-d0876491d5d7/scratch/sdk/go/bin/go',
+    '/home/jptns/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.9.linux-amd64/bin/go',
+    '/home/jptns/.gemini/antigravity/brain/29a3814e-7081-4cc2-ad46-d0876491d5d7/scratch/sdk/go/bin/go',
   ];
 
   for (const candidate of candidates) {

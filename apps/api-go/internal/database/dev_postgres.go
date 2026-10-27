@@ -11,8 +11,17 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"time"
 )
+
+var localPGliteActive atomic.Bool
+
+// IsLocalPGliteActive reports whether the embedded single-connection PGlite socket server
+// was started for local development in this process.
+func IsLocalPGliteActive() bool {
+	return localPGliteActive.Load()
+}
 
 // EnsureLocalPostgresIfNeeded checks if a local PostgreSQL server is reachable when running
 // in non-production mode against localhost/127.0.0.1. If no external PostgreSQL daemon is
@@ -92,8 +101,10 @@ func EnsureLocalPostgresIfNeeded(env string, dbURL string) (func(), error) {
 	}
 
 	log.Printf("[devPostgres] Local PostgreSQL listening on 127.0.0.1:%s", port)
+	localPGliteActive.Store(true)
 
 	cleanup := func() {
+		localPGliteActive.Store(false)
 		if cmd.Process != nil {
 			_ = cmd.Process.Signal(os.Interrupt)
 			done := make(chan error, 1)
