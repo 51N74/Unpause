@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/jackc/pgx/v5/stdlib"
@@ -55,7 +54,7 @@ func run() error {
 		return fmt.Errorf("failed to set goose dialect: %w", err)
 	}
 
-	migrationsDir := filepath.Join(".", "migrations")
+	migrationsDir := database.ResolveMigrationsDir()
 	if err := goose.RunContext(ctx, command, sqlDB, migrationsDir, os.Args[2:]...); err != nil {
 		return fmt.Errorf("goose %q failed: %w", command, err)
 	}

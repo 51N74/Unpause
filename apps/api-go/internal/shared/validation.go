@@ -73,12 +73,23 @@ func (v *Validator) Email(path string, val *string) string {
 		v.AddError(path, "Email is required")
 		return ""
 	}
+	if utf8.RuneCountInString(trimmed) > 254 {
+		v.AddError(path, "Email must be at most 254 characters")
+		return ""
+	}
 	addr, err := mail.ParseAddress(trimmed)
 	if err != nil || addr.Address != trimmed || !strings.Contains(trimmed, "@") {
 		v.AddError(path, "Please provide a valid email address")
 		return ""
 	}
 	return strings.ToLower(trimmed)
+}
+
+// EscapeLikePattern escapes SQL LIKE/ILIKE wildcard characters (%, _, \) so user search
+// strings match literal characters when paired with ESCAPE '\'.
+func EscapeLikePattern(s string) string {
+	r := strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`)
+	return r.Replace(s)
 }
 
 func IsValidIssueStatus(status string) bool {

@@ -13,12 +13,18 @@ import (
 )
 
 const (
-	argon2Memory      uint32 = 19456
-	argon2Time        uint32 = 2
-	argon2Parallelism uint8  = 1
-	argon2SaltLen     uint32 = 16
-	argon2KeyLen      uint32 = 32
+	argon2Memory         uint32 = 19456
+	argon2Time           uint32 = 2
+	argon2Parallelism    uint8  = 1
+	argon2SaltLen        uint32 = 16
+	argon2KeyLen         uint32 = 32
+	maxConcurrentArgon2  int    = 4
+	dummyArgon2idPHCHash string = "$argon2id$v=19$m=19456,t=2,p=1$c29tZXJhbmRvbXNhbHQxMjM0$K8p7mU5dG9X1vP2zL4qW6nB8yR0cT3fH5jK7lM9nP1q"
 )
+
+// argon2Sem bounds concurrent Argon2id computations so rapid authentication spikes
+// cannot exhaust container memory on small hosting instances.
+var argon2Sem = make(chan struct{}, maxConcurrentArgon2)
 
 // HashPassword hashes a plaintext password using Argon2id and encodes it in standard PHC string format
 // ($argon2id$v=19$m=19456,t=2,p=1$<salt>$<hash>), fully compatible with existing Node argon2 hashes.
@@ -28,7 +34,9 @@ func HashPassword(plain string) (string, error) {
 		return "", fmt.Errorf("failed to generate password salt: %w", err)
 	}
 
+	argon2Sem <- struct{}{}
 	hash := argon2.IDKey([]byte(plain), salt, argon2Time, argon2Memory, argon2Parallelism, argon2KeyLen)
+	<-argon2Sem
 
 	b64Salt := base64.RawStdEncoding.EncodeToString(salt)
 	b64Hash := base64.RawStdEncoding.EncodeToString(hash)
@@ -90,9 +98,18 @@ func verifyArgon2id(encodedHash, plain string) (bool, error) {
 		return false, fmt.Errorf("invalid argon2 hash: %w", err)
 	}
 
+	argon2Sem <- struct{}{}
 	computedHash := argon2.IDKey([]byte(plain), salt, iterations, memory, parallelism, uint32(len(expectedHash)))
+	<-argon2Sem
+
 	if subtle.ConstantTimeCompare(expectedHash, computedHash) == 1 {
 		return true, nil
 	}
 	return false, nil
+}
+
+// VerifyDummyPassword performs a full Argon2id verification against a static dummy hash
+// so failed login attempts for nonexistent accounts take the same work as existing accounts.
+func VerifyDummyPassword(plain string) {
+	_, _ = verifyArgon2id(dummyArgon2idPHCHash, plain)
 }

@@ -3,6 +3,7 @@ package config
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"strconv"
@@ -13,15 +14,47 @@ import (
 
 // Config holds validated startup settings for the Unpause Go API server.
 type Config struct {
-	Env               string
-	Port              int
-	DatabaseURL       string
-	SessionSecret     string
-	SessionCookieName string
-	SessionTTLHours   int
-	CORSOrigins       []string
-	GitHubAPIBaseURL  string
-	GitHubToken       string
+	Env                   string
+	Port                  int
+	DatabaseURL           string
+	SessionSecret         string
+	SessionCookieName     string
+	SessionCookieSameSite string
+	SessionCookieSecure   *bool
+	SessionTTLHours       int
+	CORSOrigins           []string
+	GitHubAPIBaseURL      string
+	GitHubToken           string
+	AuthRateLimitPerMin   int
+	StaticFilesDir        string
+}
+
+// CookieSameSiteMode returns the net/http SameSite mode (defaulting to Lax).
+func (c *Config) CookieSameSiteMode() http.SameSite {
+	switch strings.ToLower(strings.TrimSpace(c.SessionCookieSameSite)) {
+	case "none":
+		return http.SameSiteNoneMode
+	case "strict":
+		return http.SameSiteStrictMode
+	default:
+		return http.SameSiteLaxMode
+	}
+}
+
+// CookieSecure reports whether the session cookie must be marked Secure.
+func (c *Config) CookieSecure() bool {
+	if c.SessionCookieSecure != nil {
+		return *c.SessionCookieSecure
+	}
+	return c.Env == "production" || c.CookieSameSiteMode() == http.SameSiteNoneMode
+}
+
+// EffectiveAuthRateLimitPerMin returns the per-IP per-minute limit for authentication endpoints.
+func (c *Config) EffectiveAuthRateLimitPerMin() int {
+	if c.AuthRateLimitPerMin > 0 {
+		return c.AuthRateLimitPerMin
+	}
+	return 25
 }
 
 // LoadFromEnv loads an optional .env file and validates process environment variables.
@@ -74,6 +107,33 @@ func ParseEnv(getenv func(string) string) (*Config, error) {
 		cookieName = "unpause_sid"
 	}
 
+	cookieSameSite := strings.ToLower(strings.TrimSpace(getenv("SESSION_COOKIE_SAMESITE")))
+	if cookieSameSite == "" {
+		cookieSameSite = "lax"
+	}
+	switch cookieSameSite {
+	case "lax", "strict", "none":
+	default:
+		issues = append(issues, "SESSION_COOKIE_SAMESITE: must be one of lax, strict, none")
+	}
+
+	var cookieSecure *bool
+	if rawSecure := strings.ToLower(strings.TrimSpace(getenv("SESSION_COOKIE_SECURE"))); rawSecure != "" {
+		switch rawSecure {
+		case "true", "1":
+			b := true
+			cookieSecure = &b
+		case "false", "0":
+			b := false
+			cookieSecure = &b
+		default:
+			issues = append(issues, "SESSION_COOKIE_SECURE: must be true or false")
+		}
+	}
+	if cookieSameSite == "none" && cookieSecure != nil && !*cookieSecure {
+		issues = append(issues, "SESSION_COOKIE_SECURE: must be true when SESSION_COOKIE_SAMESITE is none")
+	}
+
 	ttlHours := 168
 	if rawTTL := strings.TrimSpace(getenv("SESSION_TTL_HOURS")); rawTTL != "" {
 		t, err := strconv.Atoi(rawTTL)
@@ -84,15 +144,38 @@ func ParseEnv(getenv func(string) string) (*Config, error) {
 		}
 	}
 
+	authRateLimit := 25
+	if rawRate := strings.TrimSpace(getenv("AUTH_RATE_LIMIT_MAX")); rawRate != "" {
+		r, err := strconv.Atoi(rawRate)
+		if err != nil || r <= 0 {
+			issues = append(issues, "AUTH_RATE_LIMIT_MAX: must be a positive integer")
+		} else {
+			authRateLimit = r
+		}
+	}
+
+	staticFilesDir := strings.TrimSpace(getenv("STATIC_FILES_DIR"))
+
 	rawOrigins := strings.TrimSpace(getenv("CORS_ORIGINS"))
+	renderExternalURL := strings.TrimRight(strings.TrimSpace(getenv("RENDER_EXTERNAL_URL")), "/")
 	var corsOrigins []string
-	if rawOrigins == "" {
+	if rawOrigins == "" && renderExternalURL == "" {
 		issues = append(issues, "CORS_ORIGINS: CORS_ORIGINS is required")
 	} else {
+		seenOrigins := make(map[string]struct{})
 		for _, part := range strings.Split(rawOrigins, ",") {
-			trimmed := strings.TrimSpace(part)
+			trimmed := strings.TrimRight(strings.TrimSpace(part), "/")
 			if trimmed != "" {
-				corsOrigins = append(corsOrigins, trimmed)
+				if _, exists := seenOrigins[trimmed]; !exists {
+					seenOrigins[trimmed] = struct{}{}
+					corsOrigins = append(corsOrigins, trimmed)
+				}
+			}
+		}
+		if renderExternalURL != "" {
+			if _, exists := seenOrigins[renderExternalURL]; !exists {
+				seenOrigins[renderExternalURL] = struct{}{}
+				corsOrigins = append(corsOrigins, renderExternalURL)
 			}
 		}
 		if len(corsOrigins) == 0 {
@@ -117,14 +200,18 @@ func ParseEnv(getenv func(string) string) (*Config, error) {
 	}
 
 	return &Config{
-		Env:               env,
-		Port:              port,
-		DatabaseURL:       dbURL,
-		SessionSecret:     sessionSecret,
-		SessionCookieName: cookieName,
-		SessionTTLHours:   ttlHours,
-		CORSOrigins:       corsOrigins,
-		GitHubAPIBaseURL:  strings.TrimRight(githubBase, "/"),
-		GitHubToken:       githubToken,
+		Env:                   env,
+		Port:                  port,
+		DatabaseURL:           dbURL,
+		SessionSecret:         sessionSecret,
+		SessionCookieName:     cookieName,
+		SessionCookieSameSite: cookieSameSite,
+		SessionCookieSecure:   cookieSecure,
+		SessionTTLHours:       ttlHours,
+		CORSOrigins:           corsOrigins,
+		GitHubAPIBaseURL:      strings.TrimRight(githubBase, "/"),
+		GitHubToken:           githubToken,
+		AuthRateLimitPerMin:   authRateLimit,
+		StaticFilesDir:        staticFilesDir,
 	}, nil
 }

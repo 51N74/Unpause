@@ -19,6 +19,7 @@ const (
 	ErrCodeConflict              ErrorCode = "CONFLICT"
 	ErrCodeProjectArchived       ErrorCode = "PROJECT_ARCHIVED"
 	ErrCodeScopeVersionImmutable ErrorCode = "SCOPE_VERSION_IMMUTABLE"
+	ErrCodeRateLimit             ErrorCode = "RATE_LIMIT_EXCEEDED"
 	ErrCodeGitHubRateLimit       ErrorCode = "GITHUB_RATE_LIMIT"
 	ErrCodeGitHubUpstream        ErrorCode = "GITHUB_UPSTREAM_ERROR"
 	ErrCodeInternal              ErrorCode = "INTERNAL_ERROR"
@@ -114,6 +115,17 @@ func NewScopeVersionImmutableError() *AppError {
 		StatusCode: http.StatusMethodNotAllowed,
 		Code:       ErrCodeScopeVersionImmutable,
 		Message:    "Scope versions are immutable and cannot be updated or deleted.",
+	}
+}
+
+func NewRateLimitError(message string) *AppError {
+	if message == "" {
+		message = "Too many authentication attempts. Please wait and try again."
+	}
+	return &AppError{
+		StatusCode: http.StatusTooManyRequests,
+		Code:       ErrCodeRateLimit,
+		Message:    message,
 	}
 }
 

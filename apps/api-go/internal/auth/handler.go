@@ -34,8 +34,8 @@ func (h *Handler) setSessionCookie(c *gin.Context, sessionID string) {
 		MaxAge:   maxAge,
 		Expires:  time.Now().UTC().Add(time.Duration(maxAge) * time.Second),
 		HttpOnly: true,
-		Secure:   h.cfg.Env == "production",
-		SameSite: http.SameSiteLaxMode,
+		Secure:   h.cfg.CookieSecure(),
+		SameSite: h.cfg.CookieSameSiteMode(),
 	})
 }
 
@@ -47,9 +47,16 @@ func (h *Handler) clearSessionCookie(c *gin.Context) {
 		MaxAge:   -1,
 		Expires:  time.Unix(0, 0).UTC(),
 		HttpOnly: true,
-		Secure:   h.cfg.Env == "production",
-		SameSite: http.SameSiteLaxMode,
+		Secure:   h.cfg.CookieSecure(),
+		SameSite: h.cfg.CookieSameSiteMode(),
 	})
+}
+
+func (h *Handler) invalidatePreviousSessionCookie(c *gin.Context, newSessionID string) {
+	prevSessionID, err := c.Cookie(h.cfg.SessionCookieName)
+	if err == nil && strings.TrimSpace(prevSessionID) != "" && prevSessionID != newSessionID {
+		_ = h.service.Logout(c.Request.Context(), prevSessionID)
+	}
 }
 
 func (h *Handler) Register(c *gin.Context) {
@@ -97,6 +104,7 @@ func (h *Handler) Register(c *gin.Context) {
 		return
 	}
 
+	h.invalidatePreviousSessionCookie(c, sessionID)
 	h.setSessionCookie(c, sessionID)
 	c.JSON(http.StatusCreated, gin.H{"user": user})
 }
@@ -115,6 +123,9 @@ func (h *Handler) Login(c *gin.Context) {
 		v.AddError("password", "Password is required")
 	} else {
 		password = *req.Password
+		if utf8.RuneCountInString(password) > 128 {
+			v.AddError("password", "Password must be at most 128 characters")
+		}
 	}
 
 	if v.HasErrors() {
@@ -128,6 +139,7 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
+	h.invalidatePreviousSessionCookie(c, sessionID)
 	h.setSessionCookie(c, sessionID)
 	c.JSON(http.StatusOK, gin.H{"user": user})
 }

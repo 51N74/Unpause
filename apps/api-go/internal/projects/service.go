@@ -114,8 +114,8 @@ func (s *Service) List(ctx context.Context, userID, search, status string) ([]Pr
 	}
 
 	if q := strings.TrimSpace(search); q != "" {
-		whereClauses = append(whereClauses, fmt.Sprintf(`p."name" ILIKE '%%' || $%d || '%%'`, argIdx))
-		args = append(args, q)
+		whereClauses = append(whereClauses, fmt.Sprintf(`p."name" ILIKE '%%' || $%d || '%%' ESCAPE '\'`, argIdx))
+		args = append(args, shared.EscapeLikePattern(q))
 		argIdx++
 	}
 

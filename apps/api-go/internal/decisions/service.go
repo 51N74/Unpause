@@ -106,9 +106,9 @@ func (s *Service) List(ctx context.Context, userID, projectID string, filter Lis
 	if q := strings.TrimSpace(filter.Search); q != "" {
 		whereClauses = append(
 			whereClauses,
-			fmt.Sprintf(`(d."problem" ILIKE '%%' || $%d || '%%' OR d."decision" ILIKE '%%' || $%d || '%%')`, argIdx, argIdx),
+			fmt.Sprintf(`(d."problem" ILIKE '%%' || $%d || '%%' ESCAPE '\' OR d."decision" ILIKE '%%' || $%d || '%%' ESCAPE '\')`, argIdx, argIdx),
 		)
-		args = append(args, q)
+		args = append(args, shared.EscapeLikePattern(q))
 		argIdx++
 	}
 
@@ -404,7 +404,7 @@ func (s *Service) Delete(ctx context.Context, userID, projectID, decisionID stri
 		_ = tx.Rollback(ctx)
 	}()
 
-	if _, err := tx.Exec(ctx, `DELETE FROM "DecisionRecord" WHERE "id" = $1`, decisionID); err != nil {
+	if _, err := tx.Exec(ctx, `DELETE FROM "DecisionRecord" WHERE "id" = $1 AND "projectId" = $2`, decisionID, projectID); err != nil {
 		return err
 	}
 	if _, err := tx.Exec(ctx, `UPDATE "Project" SET "updatedAt" = $1 WHERE "id" = $2`, now, projectID); err != nil {

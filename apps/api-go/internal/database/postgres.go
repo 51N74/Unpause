@@ -6,6 +6,8 @@ import (
 	"database/sql"
 	"fmt"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -78,6 +80,21 @@ func NewPool(ctx context.Context, rawDatabaseURL string) (*pgxpool.Pool, error) 
 	}
 
 	return pool, nil
+}
+
+// ResolveMigrationsDir locates the SQL migrations directory whether the process working directory
+// is apps/api-go or the repository root.
+func ResolveMigrationsDir() string {
+	candidates := []string{
+		filepath.Join(".", "migrations"),
+		filepath.Join("apps", "api-go", "migrations"),
+	}
+	for _, c := range candidates {
+		if info, err := os.Stat(c); err == nil && info.IsDir() {
+			return c
+		}
+	}
+	return filepath.Join(".", "migrations")
 }
 
 // RunMigrations applies versioned SQL migrations from migrationsDir using Goose.

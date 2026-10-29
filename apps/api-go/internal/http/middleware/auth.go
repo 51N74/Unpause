@@ -42,8 +42,8 @@ func RequireAuth(cfg *config.Config, validateFn func(ctx context.Context, sessio
 					MaxAge:   -1,
 					Expires:  time.Unix(0, 0).UTC(),
 					HttpOnly: true,
-					Secure:   cfg.Env == "production",
-					SameSite: http.SameSiteLaxMode,
+					Secure:   cfg.CookieSecure(),
+					SameSite: cfg.CookieSameSiteMode(),
 				})
 			}
 			RespondError(c, err)

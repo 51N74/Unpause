@@ -134,6 +134,7 @@ func (s *Service) Login(ctx context.Context, email, password string) (UserRespon
 		email,
 	).Scan(&user.ID, &user.Email, &user.PasswordHash, &user.DisplayName, &user.CreatedAt, &user.UpdatedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
+		shared.VerifyDummyPassword(password)
 		return UserResponse{}, "", shared.NewUnauthorizedError("Invalid email or password.")
 	}
 	if err != nil {

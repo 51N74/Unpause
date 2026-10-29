@@ -1,5 +1,4 @@
 import { spawnSync, spawn } from 'node:child_process';
-import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -7,29 +6,42 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const apiGoDir = path.resolve(__dirname, '../apps/api-go');
 
 function resolveGoBinary() {
-  if (process.env.GO_BIN && fs.existsSync(process.env.GO_BIN)) {
-    return process.env.GO_BIN;
+  const configuredGoBin = process.env.GO_BIN;
+  if (configuredGoBin !== undefined && configuredGoBin.trim() !== '') {
+    const rawCandidate = configuredGoBin.trim();
+    const candidate =
+      path.isAbsolute(rawCandidate) ||
+      rawCandidate.includes(path.sep) ||
+      rawCandidate.includes('/')
+        ? path.resolve(rawCandidate)
+        : rawCandidate;
+
+    const probe = spawnSync(candidate, ['version'], {
+      stdio: 'ignore',
+      shell: false,
+    });
+    if (probe.error || probe.status !== 0) {
+      const detail = probe.error
+        ? ` (${probe.error.message})`
+        : ` (exit code ${probe.status ?? 'unknown'})`;
+      console.error(
+        `Error: Configured GO_BIN "${rawCandidate}" is not a valid Go executable${detail}.`
+      );
+      process.exit(1);
+    }
+    return candidate;
   }
 
-  const probe = spawnSync('go', ['version'], { stdio: 'ignore' });
-  if (probe.status === 0) {
+  const probe = spawnSync('go', ['version'], {
+    stdio: 'ignore',
+    shell: false,
+  });
+  if (!probe.error && probe.status === 0) {
     return 'go';
   }
 
-  const candidates = [
-    '/usr/local/go/bin/go',
-    '/home/jptns/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.9.linux-amd64/bin/go',
-    '/home/jptns/.gemini/antigravity/brain/29a3814e-7081-4cc2-ad46-d0876491d5d7/scratch/sdk/go/bin/go',
-  ];
-
-  for (const candidate of candidates) {
-    if (fs.existsSync(candidate)) {
-      return candidate;
-    }
-  }
-
   console.error(
-    'Error: Go toolchain not found in PATH or known SDK paths. Install Go >= 1.24 or set GO_BIN.'
+    'Error: Go toolchain ("go") was not found in PATH. Install Go >= 1.24 and ensure it is on PATH, or set GO_BIN to the Go executable path.'
   );
   process.exit(1);
 }
@@ -37,13 +49,22 @@ function resolveGoBinary() {
 const goBin = resolveGoBinary();
 const args = process.argv.slice(2);
 
+const env = { ...process.env };
+if (path.isAbsolute(goBin)) {
+  const binDir = path.dirname(goBin);
+  env.PATH = env.PATH ? `${binDir}${path.delimiter}${env.PATH}` : binDir;
+}
+
 const proc = spawn(goBin, args, {
   cwd: apiGoDir,
   stdio: 'inherit',
-  env: {
-    ...process.env,
-    PATH: `${path.dirname(goBin)}${path.delimiter}${process.env.PATH || ''}`,
-  },
+  shell: false,
+  env,
+});
+
+proc.on('error', (err) => {
+  console.error(`Error: Failed to launch Go process ("${goBin}"): ${err.message}`);
+  process.exit(1);
 });
 
 proc.on('exit', (code, signal) => {
@@ -51,5 +72,5 @@ proc.on('exit', (code, signal) => {
     process.kill(process.pid, signal);
     return;
   }
-  process.exit(code ?? 0);
+  process.exit(code ?? 1);
 });

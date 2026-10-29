@@ -1353,3 +1353,427 @@ func Test5_GooseMigrationFreshAndPrismaCompatibility(t *testing.T) {
 	})
 }
 
+func Test6_SecurityHardeningIDORValidationAndRateLimiting(t *testing.T) {
+	t.Run("sets security headers, validates cookie config, checks DB in /health, and blocks cross-site Sec-Fetch-Site or Referer", func(t *testing.T) {
+		tc := newTestClient(t)
+		resp, body := tc.request(http.MethodGet, "/api/v1/health", nil, nil)
+		if resp.StatusCode != http.StatusOK || body["status"] != "ok" || body["database"] != "ok" {
+			t.Fatalf("expected 200 status=ok database=ok on /health, got %d: %v", resp.StatusCode, body)
+		}
+		if resp.Header.Get("X-Content-Type-Options") != "nosniff" ||
+			resp.Header.Get("X-Frame-Options") != "DENY" ||
+			resp.Header.Get("Referrer-Policy") != "strict-origin-when-cross-origin" ||
+			resp.Header.Get("Permissions-Policy") == "" {
+			t.Fatalf("missing expected security headers: %v", resp.Header)
+		}
+
+		// Verify HSTS header is set in production mode
+		prodCfg := *testDeps.Config
+		prodCfg.Env = "production"
+		prodEngine := router.NewEngine(router.NewDependencies(&prodCfg, testPool, nil))
+		prodRec := httptest.NewRecorder()
+		prodReq := httptest.NewRequest(http.MethodGet, "/api/v1/health", nil)
+		prodEngine.ServeHTTP(prodRec, prodReq)
+		if !strings.Contains(prodRec.Header().Get("Strict-Transport-Security"), "max-age=31536000") {
+			t.Fatalf("expected Strict-Transport-Security header in production, got %q", prodRec.Header().Get("Strict-Transport-Security"))
+		}
+
+		// Verify cookie SameSite=none with Secure=false is rejected by config.ParseEnv
+		_, cfgErr := config.ParseEnv(func(key string) string {
+			switch key {
+			case "NODE_ENV":
+				return "production"
+			case "DATABASE_URL":
+				return "postgresql://postgres:postgres@localhost:5432/unpause"
+			case "SESSION_SECRET":
+				return "super-secret-session-key-at-least-32-chars"
+			case "CORS_ORIGINS":
+				return "https://app.unpause.test"
+			case "SESSION_COOKIE_SAMESITE":
+				return "none"
+			case "SESSION_COOKIE_SECURE":
+				return "false"
+			default:
+				return ""
+			}
+		})
+		if cfgErr == nil || !strings.Contains(cfgErr.Error(), "SESSION_COOKIE_SECURE") {
+			t.Fatalf("expected ParseEnv to reject SameSite=none with Secure=false, got: %v", cfgErr)
+		}
+
+		// Verify state-changing request without Origin is blocked when Sec-Fetch-Site: cross-site is present
+		csrfResp1, csrfBody1 := tc.request(
+			http.MethodPost,
+			"/api/v1/auth/logout",
+			nil,
+			map[string]string{"Sec-Fetch-Site": "cross-site"},
+		)
+		if csrfResp1.StatusCode != http.StatusForbidden || csrfBody1["error"].(map[string]any)["code"] != "INVALID_ORIGIN" {
+			t.Fatalf("expected 403 INVALID_ORIGIN on Sec-Fetch-Site: cross-site, got %d: %v", csrfResp1.StatusCode, csrfBody1)
+		}
+
+		// Verify state-changing request without Origin is blocked when Referer is from a disallowed origin
+		csrfResp2, csrfBody2 := tc.request(
+			http.MethodPost,
+			"/api/v1/auth/logout",
+			nil,
+			map[string]string{"Referer": "https://evil.example.com/attack.html"},
+		)
+		if csrfResp2.StatusCode != http.StatusForbidden || csrfBody2["error"].(map[string]any)["code"] != "INVALID_ORIGIN" {
+			t.Fatalf("expected 403 INVALID_ORIGIN on disallowed Referer, got %d: %v", csrfResp2.StatusCode, csrfBody2)
+		}
+
+		// Verify state-changing request with allowed Referer succeeds
+		okLogoutResp, _ := tc.request(
+			http.MethodPost,
+			"/api/v1/auth/logout",
+			nil,
+			map[string]string{"Referer": testAllowedOrigin + "/projects"},
+		)
+		if okLogoutResp.StatusCode != http.StatusOK {
+			t.Fatalf("expected 200 on logout with allowed Referer, got %d", okLogoutResp.StatusCode)
+		}
+	})
+
+	t.Run("serves static SPA files and index.html fallback when STATIC_FILES_DIR is configured while protecting /api routes", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		if err := os.WriteFile(filepath.Join(tmpDir, "index.html"), []byte("<!doctype html><title>Unpause SPA</title>"), 0o600); err != nil {
+			t.Fatalf("failed to write temp index.html: %v", err)
+		}
+		if err := os.WriteFile(filepath.Join(tmpDir, "app.js"), []byte("console.log('unpause');"), 0o600); err != nil {
+			t.Fatalf("failed to write temp app.js: %v", err)
+		}
+
+		spaCfg := *testDeps.Config
+		spaCfg.StaticFilesDir = tmpDir
+		spaEngine := router.NewEngine(router.NewDependencies(&spaCfg, testPool, nil))
+
+		// 1. Root "/" serves index.html with 200 OK
+		rootRec := httptest.NewRecorder()
+		rootReq := httptest.NewRequest(http.MethodGet, "/", nil)
+		spaEngine.ServeHTTP(rootRec, rootReq)
+		if rootRec.Code != http.StatusOK || !strings.Contains(rootRec.Body.String(), "<title>Unpause SPA</title>") {
+			t.Fatalf("expected 200 serving index.html on /, got %d: %s", rootRec.Code, rootRec.Body.String())
+		}
+
+		// 2. Static asset request
+		assetRec := httptest.NewRecorder()
+		assetReq := httptest.NewRequest(http.MethodGet, "/app.js", nil)
+		spaEngine.ServeHTTP(assetRec, assetReq)
+		if assetRec.Code != http.StatusOK || !strings.Contains(assetRec.Body.String(), "console.log('unpause')") {
+			t.Fatalf("expected 200 serving static asset, got %d: %s", assetRec.Code, assetRec.Body.String())
+		}
+
+		// 3. Client-side route fallback to index.html
+		routeRec := httptest.NewRecorder()
+		routeReq := httptest.NewRequest(http.MethodGet, "/projects/123/resume", nil)
+		spaEngine.ServeHTTP(routeRec, routeReq)
+		if routeRec.Code != http.StatusOK || !strings.Contains(routeRec.Body.String(), "<title>Unpause SPA</title>") {
+			t.Fatalf("expected 200 SPA index.html fallback, got %d: %s", routeRec.Code, routeRec.Body.String())
+		}
+
+		// 4. Unknown /api/v1/* route still returns 404 JSON error
+		apiRec := httptest.NewRecorder()
+		apiReq := httptest.NewRequest(http.MethodGet, "/api/v1/unknown-endpoint", nil)
+		spaEngine.ServeHTTP(apiRec, apiReq)
+		if apiRec.Code != http.StatusNotFound || !strings.Contains(apiRec.Body.String(), "NOT_FOUND") {
+			t.Fatalf("expected 404 JSON NOT_FOUND on unknown /api route, got %d: %s", apiRec.Code, apiRec.Body.String())
+		}
+
+		// 5. Path traversal attempt is rejected with 404
+		travRec := httptest.NewRecorder()
+		travReq := httptest.NewRequest(http.MethodGet, "/%2e%2e/%2e%2e/etc/passwd", nil)
+		spaEngine.ServeHTTP(travRec, travReq)
+		if travRec.Code != http.StatusNotFound {
+			t.Fatalf("expected 404 on path traversal attempt, got %d", travRec.Code)
+		}
+
+		// 6. Health check returns 503 when database pool is closed/unreachable
+		deadPoolCfg, err := pgxpool.ParseConfig("postgresql://postgres:postgres@127.0.0.1:1/postgres?sslmode=disable")
+		if err != nil {
+			t.Fatalf("failed to parse dead pool config: %v", err)
+		}
+		deadPool, err := pgxpool.NewWithConfig(context.Background(), deadPoolCfg)
+		if err != nil {
+			t.Fatalf("failed to create dead pool: %v", err)
+		}
+		deadPool.Close()
+		unhealthyEngine := router.NewEngine(router.NewDependencies(&spaCfg, deadPool, nil))
+		unhealthyRec := httptest.NewRecorder()
+		unhealthyReq := httptest.NewRequest(http.MethodGet, "/api/v1/health", nil)
+		unhealthyEngine.ServeHTTP(unhealthyRec, unhealthyReq)
+		if unhealthyRec.Code != http.StatusServiceUnavailable || !strings.Contains(unhealthyRec.Body.String(), "degraded") {
+			t.Fatalf("expected 503 degraded when DB is unreachable, got %d: %s", unhealthyRec.Code, unhealthyRec.Body.String())
+		}
+	})
+
+	t.Run("invalidates previous session in PostgreSQL when logging in or registering again and rejects forged cookies", func(t *testing.T) {
+		browserClient := newTestClient(t)
+
+		// Log in as usera@unpause.test (obtaining Session 1)
+		login1Resp, _ := browserClient.request(http.MethodPost, "/api/v1/auth/login", map[string]any{
+			"email":    "usera@unpause.test",
+			"password": "Password123!",
+		}, nil)
+		if login1Resp.StatusCode != http.StatusOK {
+			t.Fatalf("expected 200 on first login, got %d", login1Resp.StatusCode)
+		}
+
+		var session1ID string
+		for _, c := range login1Resp.Cookies() {
+			if c.Name == testDeps.Config.SessionCookieName {
+				session1ID = c.Value
+			}
+		}
+		if session1ID == "" {
+			t.Fatal("expected session1 cookie on first login")
+		}
+
+		// Without logging out, log in as userb@unpause.test on the same browser client (sending session1ID cookie)
+		login2Resp, _ := browserClient.request(http.MethodPost, "/api/v1/auth/login", map[string]any{
+			"email":    "userb@unpause.test",
+			"password": "Password123!",
+		}, nil)
+		if login2Resp.StatusCode != http.StatusOK {
+			t.Fatalf("expected 200 on second login, got %d", login2Resp.StatusCode)
+		}
+
+		// Verify session1ID was immediately deleted from PostgreSQL
+		var count int
+		if err := testPool.QueryRow(context.Background(), `SELECT COUNT(*) FROM "Session" WHERE "id" = $1`, session1ID).Scan(&count); err != nil || count != 0 {
+			t.Fatalf("expected previous session1ID to be invalidated in PostgreSQL on re-login, count=%d err=%v", count, err)
+		}
+
+		// Verify a forged/random session cookie is rejected with 401 and cleared
+		forgedClient := newTestClient(t)
+		forgedResp, forgedBody := forgedClient.request(
+			http.MethodGet,
+			"/api/v1/projects",
+			nil,
+			map[string]string{"Cookie": "unpause_sid=0000000000000000000000000000000000000000000000000000000000000000"},
+		)
+		if forgedResp.StatusCode != http.StatusUnauthorized || forgedBody["error"].(map[string]any)["code"] != "UNAUTHORIZED" {
+			t.Fatalf("expected 401 UNAUTHORIZED for forged session cookie, got %d: %v", forgedResp.StatusCode, forgedBody)
+		}
+		setCookie := strings.Join(forgedResp.Header.Values("Set-Cookie"), ";")
+		if !strings.Contains(setCookie, "Max-Age=0") && !strings.Contains(setCookie, "Max-Age=-1") {
+			t.Fatalf("expected forged session response to clear cookie, got Set-Cookie: %s", setCookie)
+		}
+	})
+
+	t.Run("enforces complete cross-user and cross-project isolation, blocks cross-project issue linking, and validates malformed inputs", func(t *testing.T) {
+		clientA := newTestClient(t)
+		clientB := newTestClient(t)
+
+		if resp, _ := clientA.request(http.MethodPost, "/api/v1/auth/login", map[string]any{
+			"email":    "usera@unpause.test",
+			"password": "Password123!",
+		}, nil); resp.StatusCode != http.StatusOK {
+			t.Fatalf("failed to log in User A: %d", resp.StatusCode)
+		}
+		if resp, _ := clientB.request(http.MethodPost, "/api/v1/auth/login", map[string]any{
+			"email":    "userb@unpause.test",
+			"password": "Password123!",
+		}, nil); resp.StatusCode != http.StatusOK {
+			t.Fatalf("failed to log in User B: %d", resp.StatusCode)
+		}
+
+		// User A creates two separate projects (Project A1 and Project A2)
+		createProj := func(tc *testClient, name string) (string, string) {
+			resp, body := tc.request(http.MethodPost, "/api/v1/projects", map[string]any{
+				"name":        name,
+				"description": "Isolation test project",
+				"initialScope": map[string]any{
+					"problem":     "Problem statement",
+					"targetUsers": "Solo developers",
+					"goal":        "Goal statement",
+					"inScope":     "In scope items",
+					"outOfScope":  "Out of scope items",
+				},
+			}, nil)
+			if resp.StatusCode != http.StatusCreated {
+				t.Fatalf("failed to create project %s: %d %v", name, resp.StatusCode, body)
+			}
+			return body["project"].(map[string]any)["id"].(string),
+				body["initialScopeVersion"].(map[string]any)["id"].(string)
+		}
+
+		projA1, scopeA1 := createProj(clientA, "Project A1 (100% Literal_Search)")
+		projA2, _ := createProj(clientA, "Project A2")
+		projB1, _ := createProj(clientB, "Project B1")
+
+		// User A creates an issue and decision in Project A1
+		issAResp, issABody := clientA.request(http.MethodPost, fmt.Sprintf("/api/v1/projects/%s/issues", projA1), map[string]any{
+			"title":      "Issue in Project A1",
+			"nextAction": "Do step 1",
+		}, nil)
+		issueA1 := issABody["issue"].(map[string]any)["id"].(string)
+		if issAResp.StatusCode != http.StatusCreated {
+			t.Fatalf("expected 201 creating issueA1, got %d", issAResp.StatusCode)
+		}
+
+		decAResp, decABody := clientA.request(http.MethodPost, fmt.Sprintf("/api/v1/projects/%s/decisions", projA1), map[string]any{
+			"problem":     "Decision problem A1",
+			"decision":    "Decision choice A1",
+			"rationale":   "Decision rationale A1",
+			"scopeImpact": "None",
+			"issueId":     issueA1,
+		}, nil)
+		if decAResp.StatusCode != http.StatusCreated {
+			t.Fatalf("expected 201 creating decisionA1, got %d", decAResp.StatusCode)
+		}
+		decisionA1 := decABody["decision"].(map[string]any)["id"].(string)
+
+		// 1. User B attempts remaining endpoints on User A's Project A1 -> all must return 404 NOT_FOUND
+		remainingChecks := []struct {
+			method string
+			path   string
+			body   any
+		}{
+			{http.MethodPost, fmt.Sprintf("/api/v1/projects/%s/restore", projA1), nil},
+			{http.MethodPost, fmt.Sprintf("/api/v1/projects/%s/scope-versions", projA1), map[string]any{
+				"problem": "P", "targetUsers": "U", "goal": "G", "inScope": "I", "outOfScope": "O", "reasonForChange": "R",
+			}},
+			{http.MethodGet, fmt.Sprintf("/api/v1/projects/%s/scope-versions/%s", projA1, scopeA1), nil},
+			{http.MethodPost, fmt.Sprintf("/api/v1/projects/%s/issues", projA1), map[string]any{
+				"title": "Injected Issue", "nextAction": "Step",
+			}},
+			{http.MethodGet, fmt.Sprintf("/api/v1/projects/%s/issues/%s", projA1, issueA1), nil},
+			{http.MethodDelete, fmt.Sprintf("/api/v1/projects/%s/issues/%s", projA1, issueA1), nil},
+			{http.MethodPost, fmt.Sprintf("/api/v1/projects/%s/decisions", projA1), map[string]any{
+				"problem": "P", "decision": "D", "rationale": "R", "scopeImpact": "None",
+			}},
+			{http.MethodGet, fmt.Sprintf("/api/v1/projects/%s/decisions/%s", projA1, decisionA1), nil},
+			{http.MethodPatch, fmt.Sprintf("/api/v1/projects/%s/decisions/%s/pin", projA1, decisionA1), map[string]any{"isPinned": true}},
+		}
+		for _, chk := range remainingChecks {
+			resp, body := clientB.request(chk.method, chk.path, chk.body, nil)
+			if resp.StatusCode != http.StatusNotFound {
+				t.Fatalf("expected 404 NOT_FOUND for User B on %s %s, got %d: %v", chk.method, chk.path, resp.StatusCode, body)
+			}
+		}
+
+		// 2. Cross-User Resource Linking: User B attempts to link User A's issueA1 into a Decision in User B's projB1 -> 400 VALIDATION_ERROR
+		crossLinkResp, crossLinkBody := clientB.request(http.MethodPost, fmt.Sprintf("/api/v1/projects/%s/decisions", projB1), map[string]any{
+			"problem":     "User B problem",
+			"decision":    "User B decision",
+			"rationale":   "User B rationale",
+			"scopeImpact": "None",
+			"issueId":     issueA1,
+		}, nil)
+		if crossLinkResp.StatusCode != http.StatusBadRequest || crossLinkBody["error"].(map[string]any)["code"] != "VALIDATION_ERROR" {
+			t.Fatalf("expected 400 VALIDATION_ERROR when User B links User A's issueId, got %d: %v", crossLinkResp.StatusCode, crossLinkBody)
+		}
+
+		// 3. Cross-Project Resource Access (Same Owner): User A attempts to access/delete Project A1's issue/decision via Project A2's URL path -> 404 NOT_FOUND
+		crossProjGetIss, _ := clientA.request(http.MethodGet, fmt.Sprintf("/api/v1/projects/%s/issues/%s", projA2, issueA1), nil, nil)
+		if crossProjGetIss.StatusCode != http.StatusNotFound {
+			t.Fatalf("expected 404 accessing Project A1 issue via Project A2 path, got %d", crossProjGetIss.StatusCode)
+		}
+		crossProjDelDec, _ := clientA.request(http.MethodDelete, fmt.Sprintf("/api/v1/projects/%s/decisions/%s", projA2, decisionA1), nil, nil)
+		if crossProjDelDec.StatusCode != http.StatusNotFound {
+			t.Fatalf("expected 404 deleting Project A1 decision via Project A2 path, got %d", crossProjDelDec.StatusCode)
+		}
+		crossProjLinkDec, _ := clientA.request(http.MethodPost, fmt.Sprintf("/api/v1/projects/%s/decisions", projA2), map[string]any{
+			"problem": "P", "decision": "D", "rationale": "R", "issueId": issueA1,
+		}, nil)
+		if crossProjLinkDec.StatusCode != http.StatusBadRequest {
+			t.Fatalf("expected 400 linking Project A1 issue into Project A2 decision, got %d", crossProjLinkDec.StatusCode)
+		}
+
+		// 4. Escaped ILIKE Wildcard Search: searching for literal "%" only matches projects containing "%"
+		searchPctResp, searchPctBody := clientA.request(http.MethodGet, "/api/v1/projects?search=%25", nil, nil)
+		if searchPctResp.StatusCode != http.StatusOK {
+			t.Fatalf("expected 200 searching literal %%, got %d", searchPctResp.StatusCode)
+		}
+		pctProjects := searchPctBody["projects"].([]any)
+		if len(pctProjects) != 1 || pctProjects[0].(map[string]any)["id"] != projA1 {
+			t.Fatalf("expected literal %% search to match only Project A1, got %v", pctProjects)
+		}
+
+		// 5. Input Validation & Malformed Requests
+		badRegShort, _ := clientA.request(http.MethodPost, "/api/v1/auth/register", map[string]any{
+			"email": "valid@unpause.test", "password": "short",
+		}, nil)
+		if badRegShort.StatusCode != http.StatusBadRequest {
+			t.Fatalf("expected 400 on short password (<8 chars), got %d", badRegShort.StatusCode)
+		}
+
+		badRegLongPass, _ := clientA.request(http.MethodPost, "/api/v1/auth/register", map[string]any{
+			"email": "valid2@unpause.test", "password": strings.Repeat("a", 129),
+		}, nil)
+		if badRegLongPass.StatusCode != http.StatusBadRequest {
+			t.Fatalf("expected 400 on oversized password (>128 chars), got %d", badRegLongPass.StatusCode)
+		}
+
+		badRegEmail, _ := clientA.request(http.MethodPost, "/api/v1/auth/register", map[string]any{
+			"email": "not-an-email", "password": "ValidPassword123!",
+		}, nil)
+		if badRegEmail.StatusCode != http.StatusBadRequest {
+			t.Fatalf("expected 400 on invalid email, got %d", badRegEmail.StatusCode)
+		}
+
+		emptyPatchProj, _ := clientA.request(http.MethodPatch, fmt.Sprintf("/api/v1/projects/%s", projA1), map[string]any{}, nil)
+		if emptyPatchProj.StatusCode != http.StatusBadRequest {
+			t.Fatalf("expected 400 on empty project update payload, got %d", emptyPatchProj.StatusCode)
+		}
+
+		badEnumIssue, _ := clientA.request(http.MethodPost, fmt.Sprintf("/api/v1/projects/%s/issues", projA1), map[string]any{
+			"title": "Valid", "nextAction": "Valid", "status": "InvalidStatus", "priority": "InvalidPriority",
+		}, nil)
+		if badEnumIssue.StatusCode != http.StatusBadRequest {
+			t.Fatalf("expected 400 on invalid issue status/priority enums, got %d", badEnumIssue.StatusCode)
+		}
+	})
+
+	t.Run("throttles rapid authentication attempts with 429 RATE_LIMIT_EXCEEDED and Retry-After header", func(t *testing.T) {
+		rlCfg := *testDeps.Config
+		rlCfg.AuthRateLimitPerMin = 3
+		rlEngine := router.NewEngine(router.NewDependencies(&rlCfg, testPool, nil))
+		rlSrv := httptest.NewServer(rlEngine)
+		defer rlSrv.Close()
+
+		for i := 1; i <= 3; i++ {
+			resp, err := http.Post(
+				rlSrv.URL+"/api/v1/auth/login",
+				"application/json",
+				strings.NewReader(`{"email":"nonexistent@unpause.test","password":"WrongPassword123!"}`),
+			)
+			if err != nil {
+				t.Fatalf("request %d failed: %v", i, err)
+			}
+			_ = resp.Body.Close()
+			if resp.StatusCode != http.StatusUnauthorized {
+				t.Fatalf("expected 401 on attempt %d within rate limit, got %d", i, resp.StatusCode)
+			}
+		}
+
+		// 4th attempt within the same window must be throttled with 429
+		resp4, err := http.Post(
+			rlSrv.URL+"/api/v1/auth/login",
+			"application/json",
+			strings.NewReader(`{"email":"nonexistent@unpause.test","password":"WrongPassword123!"}`),
+		)
+		if err != nil {
+			t.Fatalf("request 4 failed: %v", err)
+		}
+		defer func() {
+			_ = resp4.Body.Close()
+		}()
+
+		if resp4.StatusCode != http.StatusTooManyRequests {
+			t.Fatalf("expected 429 Too Many Requests on 4th rapid auth attempt, got %d", resp4.StatusCode)
+		}
+		if resp4.Header.Get("Retry-After") == "" {
+			t.Fatal("expected Retry-After header on 429 response")
+		}
+
+		var body4 map[string]any
+		_ = json.NewDecoder(resp4.Body).Decode(&body4)
+		errObj, _ := body4["error"].(map[string]any)
+		if errObj["code"] != "RATE_LIMIT_EXCEEDED" {
+			t.Fatalf("expected RATE_LIMIT_EXCEEDED error code, got %v", errObj["code"])
+		}
+	})
+}
+

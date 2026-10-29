@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
 	"time"
 
@@ -45,7 +44,7 @@ func run() error {
 	defer pool.Close()
 
 	if cfg.Env == "development" || os.Getenv("AUTO_MIGRATE") == "true" {
-		migrationsDir := filepath.Join(".", "migrations")
+		migrationsDir := database.ResolveMigrationsDir()
 		if err := database.RunMigrations(pool, migrationsDir); err != nil {
 			return fmt.Errorf("database migration failed: %w", err)
 		}
@@ -55,7 +54,7 @@ func run() error {
 	engine := router.NewEngine(deps)
 
 	srv := &http.Server{
-		Addr:              fmt.Sprintf(":%d", cfg.Port),
+		Addr:              fmt.Sprintf("0.0.0.0:%d", cfg.Port),
 		Handler:           engine,
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       15 * time.Second,
@@ -65,7 +64,7 @@ func run() error {
 
 	errCh := make(chan error, 1)
 	go func() {
-		log.Printf("Unpause Go/Gin API listening on port %d (%s)", cfg.Port, cfg.Env)
+		log.Printf("Unpause Go/Gin API listening on 0.0.0.0:%d (%s)", cfg.Port, cfg.Env)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			errCh <- fmt.Errorf("HTTP server error: %w", err)
 		}

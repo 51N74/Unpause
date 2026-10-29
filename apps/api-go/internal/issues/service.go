@@ -70,11 +70,11 @@ func (s *Service) List(ctx context.Context, userID, projectID string, filter Lis
 		whereClauses = append(
 			whereClauses,
 			fmt.Sprintf(
-				`("title" ILIKE '%%' || $%d || '%%' OR COALESCE("description", '') ILIKE '%%' || $%d || '%%' OR "nextAction" ILIKE '%%' || $%d || '%%')`,
+				`("title" ILIKE '%%' || $%d || '%%' ESCAPE '\' OR COALESCE("description", '') ILIKE '%%' || $%d || '%%' ESCAPE '\' OR "nextAction" ILIKE '%%' || $%d || '%%' ESCAPE '\')`,
 				argIdx, argIdx, argIdx,
 			),
 		)
-		args = append(args, q)
+		args = append(args, shared.EscapeLikePattern(q))
 		argIdx++
 	}
 
@@ -328,7 +328,7 @@ func (s *Service) Delete(ctx context.Context, userID, projectID, issueID string)
 		_ = tx.Rollback(ctx)
 	}()
 
-	if _, err := tx.Exec(ctx, `DELETE FROM "Issue" WHERE "id" = $1`, issueID); err != nil {
+	if _, err := tx.Exec(ctx, `DELETE FROM "Issue" WHERE "id" = $1 AND "projectId" = $2`, issueID, projectID); err != nil {
 		return err
 	}
 	if _, err := tx.Exec(ctx, `UPDATE "Project" SET "updatedAt" = $1 WHERE "id" = $2`, now, projectID); err != nil {
