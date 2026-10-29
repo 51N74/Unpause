@@ -24,7 +24,7 @@ RUN npm --workspace=@unpause/web run build
 # ==============================================================================
 # Stage 2: Build the Go backend server and migration binaries (apps/api-go)
 # ==============================================================================
-FROM golang:1.24-alpine AS go-builder
+FROM golang:1.27.3-alpine AS go-builder
 WORKDIR /src/apps/api-go
 
 COPY apps/api-go/go.mod apps/api-go/go.sum ./
