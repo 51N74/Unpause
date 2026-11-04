@@ -3,11 +3,13 @@ package continuity
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"github.com/westride/unpause/api-go/internal/shared"
 	"io"
 	"net/http"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -46,7 +48,14 @@ func (s *Service) github(ctx context.Context, path string, target any) error {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == 429 || resp.StatusCode == 403 {
-		return shared.NewGitHubRateLimitError("GitHub refused the request; retry later", nil)
+		var details any
+		message := "GitHub refused the request; retry later"
+		if reset, err := strconv.ParseInt(resp.Header.Get("X-RateLimit-Reset"), 10, 64); err == nil {
+			at := shared.FormatISO8601(time.Unix(reset, 0))
+			details = map[string]string{"resetAt": at}
+			message = "GitHub rate limit reached; retry after " + at
+		}
+		return shared.NewGitHubRateLimitError(message, details)
 	}
 	if resp.StatusCode != 200 {
 		return shared.NewGitHubUpstreamError("Public repository or branch unavailable", nil)
@@ -57,10 +66,27 @@ func (s *Service) github(ctx context.Context, path string, target any) error {
 	return nil
 }
 func (s *Service) resolve(ctx context.Context, name string) (Repository, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
 	var r Repository
 	err := s.github(ctx, "/repos/"+name, &r)
 	if err != nil {
-		return r, err
+		var appErr *shared.AppError
+		if !errors.As(err, &appErr) || appErr.Code != shared.ErrCodeGitHubRateLimit {
+			return r, err
+		}
+		// Repository search has a separate public API quota. Accept only the exact
+		// requested public repository, never an approximate search result.
+		var search struct {
+			Items []Repository `json:"items"`
+		}
+		if err = s.github(ctx, "/search/repositories?per_page=1&q="+url.QueryEscape("repo:"+name+" is:public"), &search); err != nil {
+			return r, err
+		}
+		if len(search.Items) != 1 || !strings.EqualFold(search.Items[0].FullName, name) {
+			return r, shared.NewValidationError("Exact public repository could not be verified", nil)
+		}
+		r = search.Items[0]
 	}
 	if r.ID <= 0 || r.Private || r.Visibility != "public" || !repoPattern.MatchString(r.FullName) || r.DefaultBranch == "" || len(r.DefaultBranch) > 255 {
 		return r, shared.NewValidationError("Only public repositories with a default branch are supported", nil)

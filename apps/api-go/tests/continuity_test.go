@@ -20,6 +20,9 @@ func TestGitHubContinuity(t *testing.T) {
 	history := []string{strings.Repeat("a", 40)}
 	unavailable := false
 	repositoryID := int64(4242)
+	coreLimited := false
+	searchFullName := "solo/demo"
+	searchPrivate := false
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Authorization") != "" {
 			t.Error("public continuity request leaked an authorization token")
@@ -29,7 +32,20 @@ func TestGitHubContinuity(t *testing.T) {
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
+		if r.URL.Path == "/search/repositories" {
+			if r.URL.Query().Get("q") != "repo:solo/demo is:public" || r.URL.Query().Get("per_page") != "1" {
+				t.Error("unbounded or unsafe repository fallback search")
+			}
+			json.NewEncoder(w).Encode(map[string]any{"items": []any{map[string]any{"id": repositoryID, "full_name": searchFullName, "default_branch": "main", "private": searchPrivate, "visibility": "public"}}})
+			return
+		}
 		if r.URL.Path == "/repos/solo/demo" {
+			if coreLimited {
+				w.Header().Set("X-RateLimit-Remaining", "0")
+				w.Header().Set("X-RateLimit-Reset", "2000000000")
+				w.WriteHeader(403)
+				return
+			}
 			json.NewEncoder(w).Encode(map[string]any{"id": repositoryID, "full_name": "solo/demo", "default_branch": "main", "private": false, "visibility": "public"})
 			return
 		}
@@ -120,6 +136,7 @@ func TestGitHubContinuity(t *testing.T) {
 		resp, _ := newTestClient(t).request("POST", "/api/v1/integrations/github/"+r.ID+"/deliveries", body, map[string]string{"Authorization": "Bearer " + secret})
 		return resp.StatusCode
 	}
+	coreLimited = true
 	otherProject := project("Separate connection")
 	_, otherSecret, err := svc.Connect(ctx, user, otherProject, "https://github.com/solo/demo")
 	if err != nil {
@@ -128,6 +145,18 @@ func TestGitHubContinuity(t *testing.T) {
 	if code := send(otherSecret, d); code != 401 {
 		t.Fatalf("credential from another connection wrote target: %d", code)
 	}
+	mismatchProject := project("Reject approximate/private fallback")
+	searchFullName = "unrelated/repository"
+	if _, _, err = svc.Connect(ctx, user, mismatchProject, "https://github.com/solo/demo"); err == nil {
+		t.Fatal("approximate fallback match accepted")
+	}
+	searchFullName = "solo/demo"
+	searchPrivate = true
+	if _, _, err = svc.Connect(ctx, user, mismatchProject, "https://github.com/solo/demo"); err == nil {
+		t.Fatal("private fallback repository accepted")
+	}
+	coreLimited = false
+	searchPrivate = false
 
 	if code := send(strings.Repeat("0", 64), d); code != 401 {
 		t.Fatalf("invalid secret: %d", code)
