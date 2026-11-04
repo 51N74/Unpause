@@ -1,4 +1,4 @@
-# ผลแก้ dependencies และการเตรียมทดสอบจริง
+# ผลแก้ dependencies และทดสอบ GitHub Actions
 
 วันที่ 4 พฤศจิกายน 2026 · Branch `codex/github-continuity`
 
@@ -42,9 +42,21 @@ Prisma CLI ย้ายจาก devDependency ของ API workspace มาไ
 
 ## GitHub Actions และ Render/Neon
 
-GitHub เชื่อมต่อบัญชี 51N74 และตรวจสิทธิ์ admin/push ใน 51N74/Unpause แล้ว เตรียม workflow สำหรับ branch นี้และกำลังดำเนินการ push/ตรวจ run จริง
+GitHub Actions รันจริงจาก push ของ commit `7a0701477d6f42580f6d374ee5168444efa8b644` บน branch `codex/github-continuity`: [Continuity verification run #1](https://github.com/51N74/Unpause/actions/runs/41853333443)
 
-ผู้ใช้เลือก staging แยกจากระบบหลัก แต่ Render/Neon ยังไม่ได้เชื่อมบัญชี จึงยังไม่ได้สร้าง staging หรือวัด cold start จริง ไม่ใช้ผลจำลองแทนผลจริง
+ผลรวม **success** ตรวจยืนยันจาก GitHub API แล้ว เริ่ม 22:00:51 และเสร็จ 22:04:54 (Asia/Bangkok) ทุกขั้นของ job ผ่าน: locked install/Prisma generation, npm audit, Go/React/Node tests, sender tests, production build, race/vet, govulncheck, browser integration และ Docker image build
+
+Browser บน runner วัด request → stored 7 ms และ stored → visible 20,398 ms โดยยังใช้ GitHub stub/ฐานข้อมูลในหน่วยความจำ ไม่ใช่ latency ของ Render/Neon
+
+Docker image build ผ่าน ได้ image `sha256:790677c5987e08ce3a3fa39d2507515fb653c904dfe0b9ff0723f2e44fc8a10e` ดู [หลักฐาน JSON จาก GitHub API/runner logs](reports/GITHUB_ACTIONS_VERIFICATION.json)
+
+GitHub Actions สร้าง artifact `continuity-browser-evidence` สำหรับ screenshot และผล browser test เก็บไว้ 7 วัน รายงานนี้อ้างอิง commit ที่ทดสอบข้างต้น; commit บันทึกรายงานภายหลังเปลี่ยนเฉพาะเอกสาร/ตัวอย่าง staging config
+
+ผู้ใช้เลือก staging แยกจากระบบหลัก แต่ Render/Neon ยังไม่ได้ติดตั้ง/เชื่อมบัญชี จึงยังไม่ได้สร้าง staging, ติดตั้ง sender ใน repository ทดสอบ, ยืนยัน delivery ผ่านอินเทอร์เน็ต หรือวัด cold start จริง
+
+เตรียม [Render staging blueprint](templates/render-staging.yaml) แล้ว: service ชื่อ `unpause-continuity-staging`, ใช้ branch นี้, plan free, ปิด auto deploy, ไม่กำหนด production domain และเว้น DATABASE_URL ให้กำหนดจาก Neon staging โดยเฉพาะ ยังไม่ได้ส่ง blueprint นี้ไปสร้าง resource จริง
+
+ขั้นถัดไปหลังเชื่อมบัญชี: สร้าง Neon staging แยก, deploy service นี้, สร้างข้อมูลเดโม, ตั้ง workflow/secret ต่อ connection ใน repository ทดสอบ และวัดทั้ง warm/idle ตามคู่มือเดิม [Blueprint reference](https://render.com/docs/blueprint-spec)
 
 Workflow `Continuity verification` pin actions ด้วย SHA จาก repositories ทางการ และใช้ `contents: read` ตรวจ locked install, npm audit, tests, build, Go race/vet/govulncheck, browser test และ production Docker build เก็บ screenshot/ผล browser เป็น artifact 7 วัน
 

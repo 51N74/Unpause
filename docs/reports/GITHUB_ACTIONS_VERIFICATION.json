@@ -1,0 +1,168 @@
+{
+  "run": {
+    "id": 41853333443,
+    "html_url": "https://github.com/51N74/Unpause/actions/runs/41853333443",
+    "head_sha": "7a0701477d6f42580f6d374ee5168444efa8b644",
+    "status": "completed",
+    "conclusion": "success",
+    "created_at": "2026-11-04T15:00:51Z",
+    "updated_at": "2026-11-04T15:04:54Z"
+  },
+  "jobs": [
+    {
+      "id": 126655189211,
+      "name": "verify",
+      "status": "completed",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Install locked dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Audit npm dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "API and frontend regression tests",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Legacy Node API regression tests",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Sender retry and payload tests",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Compile application and legacy API",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Go race detector and static checks",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Go vulnerability check",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Install isolated browser test tooling",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Browser integration test",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Production Docker build",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        },
+        {
+          "name": "Upload browser evidence",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Post Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 30
+        },
+        {
+          "name": "Post Run actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 31
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 32
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 33
+        }
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 13335094252,
+      "name": "continuity-browser-evidence",
+      "size_in_bytes": 441680,
+      "url": "https://api.github.com/repos/51N74/Unpause/actions/artifacts/13335094252",
+      "archive_download_url": "https://api.github.com/repos/51N74/Unpause/actions/artifacts/13335094252/zip",
+      "expired": false,
+      "created_at": "2026-11-04T15:04:45Z",
+      "expires_at": "2026-11-11T15:04:44Z",
+      "updated_at": "2026-11-04T15:04:45Z",
+      "digest": "sha256:a3453cc2911d4b5eefbfcc8f01da836952c3d4bab328b366fbca955d4799ddce",
+      "workflow_run": {
+        "id": 41853333443,
+        "repository_id": 1438375695,
+        "head_repository_id": 1438375695,
+        "head_branch": "codex/github-continuity",
+        "head_sha": "7a0701477d6f42580f6d374ee5168444efa8b644"
+      }
+    }
+  ],
+  "browser": {
+    "environment": "GitHub Actions runner with real compiled Go API, production React, local GitHub stub and in-memory PGlite (not Render/Neon)",
+    "requestToStoredMs": 7,
+    "storedToVisibleMs": 20398
+  },
+  "dockerImage": "sha256:790677c5987e08ce3a3fa39d2507515fb653c904dfe0b9ff0723f2e44fc8a10e"
+}

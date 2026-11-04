@@ -1,0 +1,42 @@
+# Staging only. Supply a dedicated Neon staging DATABASE_URL and this service URL.
+# No production database URL, custom domain or automatic deployment is configured.
+services:
+  - type: web
+    name: unpause-continuity-staging
+    repo: https://github.com/51N74/Unpause
+    branch: codex/github-continuity
+    autoDeployTrigger: 'off'
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: AUTO_MIGRATE
+        value: "true"
+      - key: STATIC_FILES_DIR
+        value: apps/web/dist
+      - key: VITE_API_BASE_URL
+        value: /api/v1
+      - key: DATABASE_URL
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: SESSION_COOKIE_NAME
+        value: unpause_sid
+      - key: SESSION_COOKIE_SAMESITE
+        value: lax
+      - key: SESSION_COOKIE_SECURE
+        value: "true"
+      - key: SESSION_TTL_HOURS
+        value: 168
+      - key: AUTH_RATE_LIMIT_MAX
+        value: 25
+      - key: CORS_ORIGINS
+        sync: false
+      - key: GITHUB_API_BASE_URL
+        value: https://api.github.com
