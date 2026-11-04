@@ -1,0 +1,70 @@
+name: Continuity verification
+on:
+  push:
+    branches: [codex/github-continuity]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      # Schema generation only; each API test starts its own in-memory database.
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/postgres
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version: '1.27.3'
+          cache-dependency-path: apps/api-go/go.sum
+      - name: Install locked dependencies
+        run: |
+          npm ci
+          npm --workspace=apps/api run db:generate
+      - name: Audit npm dependencies
+        run: npm audit --audit-level=low
+      - name: API and frontend regression tests
+        run: npm test
+      - name: Legacy Node API regression tests
+        run: npm run test:api:node
+      - name: Sender retry and payload tests
+        run: python3 scripts/test-github-workflow.py
+      - name: Compile application and legacy API
+        run: |
+          npm run build
+          npm run build:api:node
+      - name: Go race detector and static checks
+        working-directory: apps/api-go
+        run: |
+          go test -race ./...
+          go vet ./...
+      - name: Go vulnerability check
+        working-directory: apps/api-go
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
+      - name: Install isolated browser test tooling
+        run: |
+          npm install --prefix "$RUNNER_TEMP/browser" --no-package-lock --no-audit --no-fund --save-exact playwright@1.64.1
+          "$RUNNER_TEMP/browser/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Browser integration test
+        env:
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/browser/node_modules/playwright
+          CONTINUITY_SCREENSHOT_DIR: ${{ runner.temp }}/continuity-screenshots
+        run: node scripts/test-continuity-browser.mjs | tee "$RUNNER_TEMP/browser-result.json"
+      - name: Production Docker build
+        run: docker build --tag unpause:continuity-ci .
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: continuity-browser-evidence
+          path: |
+            ${{ runner.temp }}/continuity-screenshots
+            ${{ runner.temp }}/browser-result.json
+          if-no-files-found: ignore
+          retention-days: 7

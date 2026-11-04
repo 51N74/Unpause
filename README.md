@@ -78,11 +78,11 @@ Unpause stores and displays user-authored project records only—it does not gen
 
 | Layer | Technology |
 | :--- | :--- |
-| **Frontend (`apps/web`)** | React 18, TypeScript 5.7, Vite 6, Material UI (MUI v6, Emotion), React Router v6, TanStack Query v5, React Hook Form v7 + Zod, Axios |
-| **Backend (`apps/api-go`)** | Go `1.24`, Gin (`github.com/gin-gonic/gin`), `pgx/v5` (`pgxpool`), Goose v3 (`github.com/pressly/goose/v3`), `golang.org/x/crypto` (Argon2id + bcrypt), `github.com/joho/godotenv` |
+| **Frontend (`apps/web`)** | React 18, TypeScript 5.7, Vite 6, Material UI (MUI v6, Emotion), React Router v7, TanStack Query v5, React Hook Form v7 + Zod 4, Axios |
+| **Backend (`apps/api-go`)** | Go `1.27.3`, Gin (`github.com/gin-gonic/gin`), `pgx/v5` (`pgxpool`), Goose v3 (`github.com/pressly/goose/v3`), `golang.org/x/crypto` (Argon2id + bcrypt), `github.com/joho/godotenv` |
 | **Database** | PostgreSQL (external **Neon PostgreSQL** in production; local PostgreSQL or embedded **PGlite** socket server in local development and tests) |
-| **Testing** | Go `testing` + `net/http/httptest` ([`apps/api-go/tests/api_test.go`](./apps/api-go/tests/api_test.go)), Vitest 3 + React Testing Library + jsdom ([`apps/web/src/test/app.test.tsx`](./apps/web/src/test/app.test.tsx)) |
-| **Deployment** | Multi-stage [`Dockerfile`](./Dockerfile) (`node:22-alpine` $\rightarrow$ `golang:1.24-alpine` $\rightarrow$ `alpine:3.21`), Render Web Service ([`render.yaml`](./render.yaml)), Neon PostgreSQL |
+| **Testing** | Go `testing` + `net/http/httptest` ([`apps/api-go/tests/api_test.go`](./apps/api-go/tests/api_test.go)), Vitest 5 + React Testing Library + jsdom ([`apps/web/src/test/app.test.tsx`](./apps/web/src/test/app.test.tsx)) |
+| **Deployment** | Multi-stage [`Dockerfile`](./Dockerfile) (`node:22-alpine` $\rightarrow$ `golang:1.27.3-alpine` $\rightarrow$ `alpine:3.21`), Render Web Service ([`render.yaml`](./render.yaml)), Neon PostgreSQL |
 
 > **Note on `apps/api`:** The repository also retains an earlier Node.js/Express/Prisma reference implementation in [`apps/api`](./apps/api) from an earlier course milestone. The active backend used by local development (`npm run dev`), tests (`npm test`), builds (`npm run build`), and production deployment ([`Dockerfile`](./Dockerfile) / [`render.yaml`](./render.yaml)) is the Go service in [`apps/api-go`](./apps/api-go).
 
@@ -108,7 +108,7 @@ flowchart LR
     Browser["Browser (React 18 SPA)"]
 
     subgraph Render["Render Web Service (Docker Runtime)"]
-        GoServer["Go 1.24 / Gin Server (0.0.0.0:$PORT)"]
+        GoServer["Go 1.27.3 / Gin Server (0.0.0.0:$PORT)"]
         StaticDist["Built Frontend (apps/web/dist)"]
         Migrations["Goose SQL Migrations (apps/api-go/migrations)"]
         GoServer -->|"GET /* (non-API)"| StaticDist
@@ -130,7 +130,7 @@ flowchart LR
 ```text
 .
 ├── apps/
-│   ├── api-go/                         # Active Go 1.24 + Gin backend
+│   ├── api-go/                         # Active Go 1.27.3 + Gin backend
 │   │   ├── cmd/
 │   │   │   ├── server/main.go          # Production HTTP server entrypoint (0.0.0.0:$PORT, graceful shutdown)
 │   │   │   ├── migrate/main.go         # Standalone Goose SQL migration CLI
@@ -153,7 +153,7 @@ flowchart LR
 │   │   ├── tests/
 │   │   │   └── api_test.go             # End-to-end Go HTTP + PostgreSQL integration test suite
 │   │   ├── .env.example                # Backend environment variable template
-│   │   └── go.mod                      # Go module definition (go 1.24.0)
+│   │   └── go.mod                      # Go module definition (go 1.27.3)
 │   ├── web/                            # React 18 + Vite + TypeScript frontend
 │   │   ├── src/
 │   │   │   ├── api/                    # Axios client (/api/v1) and typed endpoint wrappers
@@ -171,7 +171,7 @@ flowchart LR
 │   ├── dev.mjs                         # Runs Go API and Vite dev server concurrently
 │   ├── pglite-server.mjs               # Embedded PGlite PostgreSQL socket server for local dev and tests
 │   └── run-go.mjs                      # Portable Go command wrapper (uses GO_BIN or system PATH)
-├── Dockerfile                          # Multi-stage production container build (Node 22 + Go 1.24 + Alpine 3.21)
+├── Dockerfile                          # Multi-stage production container build (Node 22 + Go 1.27.3 + Alpine 3.21)
 ├── .dockerignore                       # Docker build context exclusions
 ├── render.yaml                         # Render Blueprint for single Docker Web Service
 ├── .env.example                        # Root environment variable reference
@@ -184,15 +184,15 @@ flowchart LR
 
 ### Local Development Requirements
 
-- **Node.js:** `>= 20.0.0` (configured in root [`package.json`](./package.json) `engines.node`; tested with Node 22 LTS) and **npm** `>= 10.0.0`.
-- **Go:** `>= 1.24.0` (configured in [`apps/api-go/go.mod`](./apps/api-go/go.mod)).
+- **Node.js:** `>= 22.12.0` (configured in root [`package.json`](./package.json) `engines.node`; tested with Node 24.14.1) and **npm** `>= 10.0.0`.
+- **Go:** `>= 1.27.3` (configured in [`apps/api-go/go.mod`](./apps/api-go/go.mod)).
   - Must be available on your system `PATH` as `go`, **or** specified via the `GO_BIN` environment variable (`GO_BIN=/path/to/go`).
 - **PostgreSQL (Optional for Local Dev):**
   - You can use a local PostgreSQL `>= 15` instance on `localhost:5432`, **or** rely on the repository's built-in PGlite fallback ([`scripts/pglite-server.mjs`](./scripts/pglite-server.mjs)), which starts automatically in non-production environments when nothing is listening on `127.0.0.1:5432`.
 
 ### Production Runtime Requirements
 
-- In production ([`Dockerfile`](./Dockerfile)), the container build runs on Render using `node:22-alpine` and `golang:1.24-alpine`, and the final `alpine:3.21` runtime image executes only the compiled Go binary (`./apps/api-go/bin/server`) connected to an external PostgreSQL database (`DATABASE_URL`). Node.js and Go are not required inside the final runtime container.
+- In production ([`Dockerfile`](./Dockerfile)), the container build runs on Render using `node:22-alpine` and `golang:1.27.3-alpine`, and the final `alpine:3.21` runtime image executes only the compiled Go binary (`./apps/api-go/bin/server`) connected to an external PostgreSQL database (`DATABASE_URL`). Node.js and Go are not required inside the final runtime container.
 
 ---
 
@@ -477,7 +477,7 @@ When using [`render.yaml`](./render.yaml), non-secret defaults are pre-populated
 
 1. **Container Build:** Render builds [`Dockerfile`](./Dockerfile) from the repository root context:
    - Stage 1 (`node:22-alpine`) runs `npm ci --include=dev --workspace=@unpause/web` and `npm --workspace=@unpause/web run build` with `VITE_API_BASE_URL=/api/v1`.
-   - Stage 2 (`golang:1.24-alpine`) compiles `./cmd/server` and `./cmd/migrate`.
+   - Stage 2 (`golang:1.27.3-alpine`) compiles `./cmd/server` and `./cmd/migrate`.
    - Stage 3 (`alpine:3.21`) copies `./apps/api-go/bin/server`, `./apps/api-go/bin/migrate`, `./apps/api-go/migrations`, and `./apps/web/dist` into `/app`.
 2. **Startup Migrations (`AUTO_MIGRATE=true`):** Render's Free plan does not support `preDeployCommand`. Instead, when `./apps/api-go/bin/server` starts with `AUTO_MIGRATE=true`, [`cmd/server/main.go`](./apps/api-go/cmd/server/main.go) resolves `apps/api-go/migrations` and executes `database.RunMigrations` (Goose `up`) before opening the HTTP listener. Because [`00001_init_schema.sql`](./apps/api-go/migrations/00001_init_schema.sql) uses idempotent DDL (`CREATE TABLE IF NOT EXISTS`, `DO $$ ... EXCEPTION WHEN duplicate_object`), restarts and redeployments are safe.
 
@@ -511,7 +511,7 @@ When using [`render.yaml`](./render.yaml), non-secret defaults are pre-populated
 | Symptom | Cause | Fix |
 | :--- | :--- | :--- |
 | `Invalid environment configuration: ...` on startup | A required variable (`DATABASE_URL`, `SESSION_SECRET >= 16 chars`, or `CORS_ORIGINS`) is missing or invalid. | Check the startup error message in logs and verify `apps/api-go/.env` (local) or Render Environment settings. |
-| `Error: Go toolchain ("go") was not found in PATH` | `go` is not installed on your system `PATH` and `GO_BIN` is unset. | Install Go `>= 1.24` and add it to `PATH`, or set `GO_BIN=/full/path/to/go` when running npm scripts. |
+| `Error: Go toolchain ("go") was not found in PATH` | `go` is not installed on your system `PATH` and `GO_BIN` is unset. | Install Go `>= 1.27.3` and add it to `PATH`, or set `GO_BIN=/full/path/to/go` when running npm scripts. |
 | `Error: Configured GO_BIN "..." is not a valid Go executable` | `GO_BIN` is set to a nonexistent or non-executable file path. | Unset `GO_BIN` to use `PATH`, or update `GO_BIN` to point directly to the `go` binary. |
 | `failed to ping PostgreSQL database` or `503` on `/api/v1/health` | `DATABASE_URL` host/credentials are wrong, or `?sslmode=require` is missing for Neon. | Verify `DATABASE_URL`. For Neon, ensure `?sslmode=require` is included; for local PGlite/Postgres without TLS, use `?sslmode=disable`. |
 | `403 INVALID_ORIGIN` on registration, login, or mutations | The browser's `Origin` header does not match `CORS_ORIGINS` (or `RENDER_EXTERNAL_URL`). | Ensure `CORS_ORIGINS` includes the exact scheme, hostname, and port of the browser URL (e.g., `http://localhost:5173` in dev or `https://<your-service>.onrender.com` in prod). |

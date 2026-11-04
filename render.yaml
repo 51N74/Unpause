@@ -2,7 +2,7 @@
 #
 # Single Render Web Service (runtime: docker):
 # - Stage 1 (node:22-alpine): Builds React SPA into apps/web/dist with VITE_API_BASE_URL=/api/v1
-# - Stage 2 (golang:1.24-alpine): Compiles Go server and Goose migration binaries
+# - Stage 2 (golang:1.27.3-alpine): Compiles Go server and Goose migration binaries
 # - Stage 3 (alpine:3.21): Runs ./apps/api-go/bin/server without Node.js at runtime,
 #   applies idempotent Goose SQL migrations on startup (AUTO_MIGRATE=true), and serves
 #   both the React SPA (STATIC_FILES_DIR=apps/web/dist) and /api/v1/* from the same origin.

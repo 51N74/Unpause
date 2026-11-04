@@ -30,6 +30,7 @@ import {
   ScopeImpactChip,
 } from '../components/Badges';
 import { CreateScopeVersionDialog } from '../components/CreateScopeVersionDialog';
+import { GitHubContinuity } from '../components/GitHubContinuity';
 import { EditProjectDialog } from '../components/EditProjectDialog';
 import { formatBangkokDateTime } from '../utils/date';
 
@@ -112,6 +113,8 @@ export const ResumeContextPage: React.FC = () => {
           </Stack>
         )}
       </Stack>
+
+      <GitHubContinuity key={project.id} projectId={project.id} archived={isReadOnly} issues={outstandingIssues} />
 
       {/* 1. Current Scope Section */}
       <Paper

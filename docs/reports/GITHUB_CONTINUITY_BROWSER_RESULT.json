@@ -1,0 +1,23 @@
+{
+  "status": "passed",
+  "environment": "local mock GitHub + in-memory PostgreSQL + compiled Go + production React",
+  "requestToStoredMs": 37,
+  "storedToVisibleMs": 20157,
+  "verified": [
+    "demo setup",
+    "login",
+    "repository setup",
+    "one-time secret",
+    "automatic visible-page polling",
+    "unread persistence on reload",
+    "explicit review",
+    "return note",
+    "workflow download",
+    "desktop/mobile overflow",
+    "no browser errors"
+  ],
+  "screenshots": [
+    "screenshots/desktop.png",
+    "screenshots/mobile.png"
+  ]
+}

@@ -13,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/westride/unpause/api-go/internal/auth"
 	"github.com/westride/unpause/api-go/internal/config"
+	"github.com/westride/unpause/api-go/internal/continuity"
 	"github.com/westride/unpause/api-go/internal/decisions"
 	"github.com/westride/unpause/api-go/internal/github"
 	"github.com/westride/unpause/api-go/internal/http/middleware"
@@ -24,14 +25,15 @@ import (
 
 // Dependencies holds the configured services used by the HTTP router.
 type Dependencies struct {
-	Config          *config.Config
-	Pool            *pgxpool.Pool
-	AuthService     *auth.Service
-	ProjectService  *projects.Service
-	ScopeService    *scopes.Service
-	IssueService    *issues.Service
-	DecisionService *decisions.Service
-	GitHubService   *github.Service
+	Config            *config.Config
+	Pool              *pgxpool.Pool
+	AuthService       *auth.Service
+	ProjectService    *projects.Service
+	ScopeService      *scopes.Service
+	IssueService      *issues.Service
+	DecisionService   *decisions.Service
+	GitHubService     *github.Service
+	ContinuityService *continuity.Service
 }
 
 // NewDependencies constructs all domain services with explicit constructor injection.
@@ -44,14 +46,15 @@ func NewDependencies(cfg *config.Config, pool *pgxpool.Pool, httpClient *http.Cl
 	ghSvc := github.NewService(cfg.GitHubAPIBaseURL, cfg.GitHubToken, httpClient)
 
 	return &Dependencies{
-		Config:          cfg,
-		Pool:            pool,
-		AuthService:     authSvc,
-		ProjectService:  projSvc,
-		ScopeService:    scopeSvc,
-		IssueService:    issueSvc,
-		DecisionService: decSvc,
-		GitHubService:   ghSvc,
+		Config:            cfg,
+		Pool:              pool,
+		AuthService:       authSvc,
+		ProjectService:    projSvc,
+		ScopeService:      scopeSvc,
+		IssueService:      issueSvc,
+		DecisionService:   decSvc,
+		GitHubService:     ghSvc,
+		ContinuityService: continuity.NewService(pool, cfg.GitHubAPIBaseURL, httpClient),
 	}
 }
 
@@ -72,6 +75,7 @@ func NewEngine(deps *Dependencies) *gin.Engine {
 	issueHandler := issues.NewHandler(deps.IssueService)
 	decHandler := decisions.NewHandler(deps.DecisionService)
 	ghHandler := github.NewHandler(deps.GitHubService)
+	continuityHandler := continuity.NewHandler(deps.ContinuityService)
 
 	authRateLimiter := middleware.AuthRateLimitMiddleware(deps.Config.EffectiveAuthRateLimitPerMin(), time.Minute)
 
@@ -104,6 +108,9 @@ func NewEngine(deps *Dependencies) *gin.Engine {
 				"timestamp": shared.FormatISO8601(time.Now().UTC()),
 			})
 		})
+
+		// Integration credential authenticates this endpoint independently of browser sessions.
+		v1.POST("/integrations/github/:connectionId/deliveries", middleware.AuthRateLimitMiddleware(120, time.Minute), continuityHandler.Ingest)
 
 		// Public auth endpoints
 		v1.POST("/auth/register", authRateLimiter, authHandler.Register)
@@ -158,6 +165,15 @@ func NewEngine(deps *Dependencies) *gin.Engine {
 			protected.PUT("/projects/:projectId/decisions/:decisionId", decHandler.Update)
 			protected.PATCH("/projects/:projectId/decisions/:decisionId/pin", decHandler.Pin)
 			protected.DELETE("/projects/:projectId/decisions/:decisionId", decHandler.Delete)
+
+			// GitHub continuity and owner-authored return context
+			protected.GET("/projects/:projectId/github", continuityHandler.View)
+			protected.POST("/projects/:projectId/github", middleware.AuthRateLimitMiddleware(10, time.Minute), continuityHandler.Connect)
+			protected.DELETE("/projects/:projectId/github", continuityHandler.Unlink)
+			protected.POST("/projects/:projectId/github/rotate", continuityHandler.Rotate)
+			protected.POST("/projects/:projectId/github/sync", continuityHandler.Sync)
+			protected.POST("/projects/:projectId/github/review", continuityHandler.Review)
+			protected.PUT("/projects/:projectId/return-context", continuityHandler.ReturnContext)
 
 			// GitHub Explorer
 			protected.GET("/github/repositories", ghHandler.SearchRepositories)
