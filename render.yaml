@@ -10,6 +10,7 @@
 services:
   - type: web
     name: unpause
+    autoDeployTrigger: checksPass
     runtime: docker
     plan: free
     dockerfilePath: ./Dockerfile
