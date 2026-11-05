@@ -52,14 +52,12 @@ Docker image build ผ่าน ได้ image `sha256:790677c5987e08ce3a3fa39d
 
 GitHub Actions สร้าง artifact `continuity-browser-evidence` สำหรับ screenshot และผล browser test เก็บไว้ 7 วัน รายงานนี้อ้างอิง commit ที่ทดสอบข้างต้น; commit บันทึกรายงานภายหลังเปลี่ยนเฉพาะเอกสาร/ตัวอย่าง staging config
 
-ผู้ใช้เลือก staging แยกจากระบบหลัก แต่ Render/Neon ยังไม่ได้ติดตั้ง/เชื่อมบัญชี จึงยังไม่ได้สร้าง staging, ติดตั้ง sender ใน repository ทดสอบ, ยืนยัน delivery ผ่านอินเทอร์เน็ต หรือวัด cold start จริง
+สร้าง staging แยกจากระบบหลักบน Render Free และ Neon Singapore แล้ว ติดตั้ง sender/secret/variable ใน repository ทดสอบ และยืนยัน authenticated delivery ผ่านอินเทอร์เน็ตจริง ดูผล warm/idle, browser และ security พร้อมหลักฐานใน [รายงาน staging จริง](UNPAUSE_STAGING_LIVE_VERIFICATION_TH.md)
 
-เตรียม [Render staging blueprint](templates/render-staging.yaml) แล้ว: service ชื่อ `unpause-continuity-staging`, ใช้ branch นี้, plan free, ปิด auto deploy, ไม่กำหนด production domain และเว้น DATABASE_URL ให้กำหนดจาก Neon staging โดยเฉพาะ ยังไม่ได้ส่ง blueprint นี้ไปสร้าง resource จริง
-
-ขั้นถัดไปหลังเชื่อมบัญชี: สร้าง Neon staging แยก, deploy service นี้, สร้างข้อมูลเดโม, ตั้ง workflow/secret ต่อ connection ใน repository ทดสอบ และวัดทั้ง warm/idle ตามคู่มือเดิม [Blueprint reference](https://render.com/docs/blueprint-spec)
+[Render staging config](templates/render-staging.yaml) เป็นตัวอย่างสำหรับตั้งค่า; resource จริงสร้างผ่าน MCP โดยตรง ไม่ได้อยู่ภายใต้ Blueprint management
 
 Workflow `Continuity verification` pin actions ด้วย SHA จาก repositories ทางการ และใช้ `contents: read` ตรวจ locked install, npm audit, tests, build, Go race/vet/govulncheck, browser test และ production Docker build เก็บ screenshot/ผล browser เป็น artifact 7 วัน
 
-การผ่าน CI บน GitHub Actions เป็นหลักฐานการรันตรวจบน runner จริง แต่ยังไม่ใช่หลักฐานว่า Actions sender ส่งถึง Render/Neon จริง ต้องยืนยัน delivery และ cold-start แยกด้วย endpoint/บัญชีที่เข้าถึงได้
+หลักฐาน CI ด้านบนเป็นการตรวจบน runner ส่วนหลักฐาน sender ถึง Render/Neon และ cold start แยกอยู่ในรายงาน staging จริง เพื่อไม่ปะปน latency ของ test stub กับ deployment
 
 อ้างอิงการ migration: [Vitest 5](https://vitest.dev/guide/migration/), [Zod 4](https://zod.dev/v4/changelog), [React Router compatibility](https://api.reactrouter.com/v7/modules/react-router-dom.html), [Prisma deepmerge-ts advisory discussion](https://github.com/prisma/orm/issues/30052), [npm workspace overrides issue](https://github.com/npm/cli/issues/9659), [OpenPGP advisory](https://pkg.go.dev/vuln/GO-2026-5932)

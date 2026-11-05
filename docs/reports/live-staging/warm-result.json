@@ -1,0 +1,16 @@
+{
+  "environment": "Real GitHub Actions -> Render Free Singapore -> Neon staging Singapore",
+  "commit": "6cea0868d34bd48e59e929c5f2355eef75684057",
+  "commitAt": "2026-11-04T15:36:49Z",
+  "receivedAt": "2026-11-04T15:37:00.172555Z",
+  "visibleAt": "2026-11-04T15:37:10.271Z",
+  "pushToStoredMs": 11172,
+  "storedToVisibleMs": 10099,
+  "source": "actions",
+  "deliveryId": "actions:41859581406",
+  "unreadPersistedAcrossReload": true,
+  "explicitReview": true,
+  "returnNoteSaved": true,
+  "mobileOverflow": false,
+  "browserErrors": []
+}

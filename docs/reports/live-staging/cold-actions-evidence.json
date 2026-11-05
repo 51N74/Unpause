@@ -1,0 +1,40 @@
+{
+  "runId": 41862787172,
+  "runURL": "https://github.com/51N74/unpause-continuity-staging-test-20261104/actions/runs/41862787172",
+  "headSHA": "a50dd7d9f034d7cb41f0178f8d68cb5980051946",
+  "status": "completed",
+  "conclusion": "success",
+  "createdAt": "2026-11-04T15:56:37Z",
+  "runStartedAt": "2026-11-04T15:56:37Z",
+  "updatedAt": "2026-11-04T16:17:49Z",
+  "jobId": 126688924815,
+  "runnerLogFirstTimestamp": "2026-11-04T15:56:40.1508705Z",
+  "senderStepStartedAt": "2026-11-04T15:56:40.3596343Z",
+  "acceptedAt": "2026-11-04T15:56:53.411613+00:00",
+  "observedDeliveryFailures": 0,
+  "renderLogs": [
+    {
+      "timestamp": "2026-11-04T15:54:07.214571529Z",
+      "message": "2026/11/04 15:54:07 Shutting down Unpause Go/Gin API server gracefully...",
+      "instance": "srv-dblktit9fdbs73c16jog-7p5p5"
+    },
+    {
+      "timestamp": "2026-11-04T15:56:46.152375716Z",
+      "message": "2026/11/04 15:56:46 goose: no migrations to run. current version: 2",
+      "instance": "srv-dblktit9fdbs73c16jog-rg7qw"
+    },
+    {
+      "timestamp": "2026-11-04T15:56:46.152589755Z",
+      "message": "2026/11/04 15:56:46 Unpause Go/Gin API listening on 0.0.0.0:10000 (production)",
+      "instance": "srv-dblktit9fdbs73c16jog-rg7qw"
+    },
+    {
+      "timestamp": "2026-11-04T16:11:53.157903297Z",
+      "message": "2026/11/04 16:11:53 Shutting down Unpause Go/Gin API server gracefully...",
+      "instance": "srv-dblktit9fdbs73c16jog-rg7qw"
+    }
+  ],
+  "telemetryCaveat": "Polling on 2026-11-04 continued to report queued and cancellation returned HTTP 409. Final runner logs, Render logs and persisted receivedAt show the delivery actually completed at 15:56:53Z; do not treat polling duration as runner queue latency.",
+  "coldStoredToVisibleMs": null,
+  "coldUIObservation": "Browser deliberately closed for the cold delivery; UI verified on return 2026-11-05."
+}

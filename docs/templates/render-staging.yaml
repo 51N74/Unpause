@@ -6,6 +6,7 @@ services:
     repo: https://github.com/51N74/Unpause
     branch: codex/github-continuity
     autoDeployTrigger: 'off'
+    region: singapore
     runtime: docker
     plan: free
     dockerfilePath: ./Dockerfile

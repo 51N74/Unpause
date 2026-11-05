@@ -1,0 +1,7 @@
+{
+  "serviceId": "srv-dblktit9fdbs73c16jog",
+  "lastApplicationRequestsBefore": "2026-11-04T15:39:16.503223Z",
+  "shutdownAt": "2026-11-04T15:54:07.214571529Z",
+  "logMessage": "Shutting down Unpause Go/Gin API server gracefully...",
+  "noTestHarnessRequestsDuringIdle": true
+}

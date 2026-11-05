@@ -4,7 +4,7 @@
 
 When returning to a paused project, developers often remember *what* code exists but forget *why* scope boundaries changed or what the immediate next step was. Unpause addresses this by automatically and permanently linking every **Decision Record** to the **Scope Version** that was active when the decision was recorded, alongside a focused **Resume Context** view and issue-level `nextAction` tracking.
 
-Unpause stores and displays user-authored project records only—it does not generate AI summaries, automatically judge scope alignment, or fabricate next actions.
+Unpause keeps Scope, Decisions and next actions authored by the owner, and can display public GitHub commit activity beside them. It does not generate AI summaries, automatically judge scope alignment, or fabricate next actions.
 
 ---
 
@@ -56,6 +56,10 @@ Unpause stores and displays user-authored project records only—it does not gen
   - Aggregates the project's active scope version, up to 3 pinned decisions, up to 5 recent decisions recorded under the current scope version, and up to 5 `Open` or `In Progress` issues with a non-empty `nextAction` (ordered by priority `High` $\rightarrow$ `Medium` $\rightarrow$ `Low`, then most recently updated).
 - **Scope Timeline View (`/projects/:projectId/timeline`):**
   - Displays all scope versions chronologically alongside the decision records recorded while each scope version was active.
+- **GitHub Continuity in Resume:**
+  - Connect one public repository and its configured default branch, install a GitHub Actions sender with a per-connection secret, and receive grouped commits without an open browser session.
+  - Includes bounded retries, idempotent ingestion, public API catch-up, explicit unread review markers, a return note and a focus issue. Archived projects pause ingestion; unlinking revokes the credential and removes integration cache.
+  - Public GitHub quotas can temporarily block catch-up while Actions delivery continues. See the [setup guide](docs/UNPAUSE_GITHUB_CONTINUITY_SETUP_TH.md) and [live staging verification](docs/UNPAUSE_STAGING_LIVE_VERIFICATION_TH.md).
 - **GitHub Repository Explorer (`/github`):**
   - Authenticated proxy search against the GitHub REST API (`/search/repositories`) with query, language, minimum stars, and pagination parameters, plus explicit handling for upstream rate limits (`429 GITHUB_RATE_LIMIT`) and upstream errors (`502 GITHUB_UPSTREAM_ERROR`).
 - **User Profile Settings (`/settings`):**
@@ -425,7 +429,7 @@ All API routes are mounted under **`/api/v1`** in [`apps/api-go/internal/http/ro
 
 Unpause is configured for deployment as **one Render Web Service** using the repository's multi-stage [`Dockerfile`](./Dockerfile) and [`render.yaml`](./render.yaml), backed by an external **Neon PostgreSQL** database.
 
-> **Important Note on Verification State:** The backend/frontend test suites, production asset build (`apps/web/dist`), Go binary compilation (`apps/api-go/bin/{server,migrate}`), and local single-origin production runtime have been verified. However, a live cloud deployment to Render and Neon has **not** been executed automatically from this repository; follow the steps below to deploy in your own accounts.
+> **Important Note on Verification State:** The backend/frontend test suites, production asset build (`apps/web/dist`), Go binary compilation (`apps/api-go/bin/{server,migrate}`), and local single-origin production runtime have been verified. A separate Render/Neon staging deployment and real GitHub Actions delivery have also been verified; see the [live staging report](docs/UNPAUSE_STAGING_LIVE_VERIFICATION_TH.md) for measured results and limitations. The existing production service was not changed.
 
 ### Step 1: Create a Neon PostgreSQL Database (Manual)
 
