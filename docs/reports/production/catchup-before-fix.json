@@ -1,0 +1,11 @@
+{
+  "sourceCommit": "6f99fdd4882a765ff6b2881c8b72d4801841f79c",
+  "repository": "51N74/panstr-webboard-forum",
+  "statusBefore": "Awaiting first update",
+  "lastSyncedAtBefore": null,
+  "activityGroupsBefore": 0,
+  "manualSyncStatus": 500,
+  "manualSyncElapsedSeconds": 5.591,
+  "errorCode": "INTERNAL_ERROR",
+  "diagnosis": "Per-commit database round trips exhausted the bounded recovery transaction deadline across regions; reproduced by latency regression."
+}

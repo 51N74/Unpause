@@ -1,6 +1,6 @@
 # สรุปผล GitHub Continuity — Unpause
 
-> ผลในเอกสารนี้เป็น baseline ก่อนแก้ dependencies และก่อนสร้าง staging; ดูผลล่าสุดใน [รายงาน dependency remediation](UNPAUSE_DEPENDENCY_REMEDIATION_TH.md) และ [รายงาน Render/Neon/GitHub Actions จริง](UNPAUSE_STAGING_LIVE_VERIFICATION_TH.md)
+> ผลในเอกสารนี้เป็น baseline ก่อนแก้ dependencies และก่อนสร้าง staging; ดูผลล่าสุดใน [รายงาน dependency remediation](UNPAUSE_DEPENDENCY_REMEDIATION_TH.md) และ [รายงาน staging](UNPAUSE_STAGING_LIVE_VERIFICATION_TH.md) / [production rollout](UNPAUSE_PRODUCTION_ROLLOUT_TH.md)
 
 
 วันที่ 4 พฤศจิกายน 2026 (Asia/Bangkok) · Branch: `codex/github-continuity` · ฐานเริ่มต้น: `develop` / `31f2e81`

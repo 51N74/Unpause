@@ -1,5 +1,7 @@
 # ผลทดสอบ Unpause บน Render / Neon / GitHub Actions จริง
 
+> ผลชุดนี้เป็น staging ก่อนปล่อย production ข้อความเรื่อง production ไม่เปลี่ยนแปลงหมายถึงช่วงทดสอบชุดนี้ ดูสถานะภายหลังใน [รายงาน production rollout](UNPAUSE_PRODUCTION_ROLLOUT_TH.md)
+
 ทดสอบ deployment วันที่ 4 พฤศจิกายน 2026 · ตรวจข้อมูลคงอยู่และ browser หลังกลับมาวันที่ 5 พฤศจิกายน 2026
 
 เวลาในเอกสารเป็น Asia/Bangkok เว้นแต่ระบุ UTC

@@ -1,0 +1,12 @@
+{
+  "observedAt": "2026-11-05T08:44:48Z",
+  "idleStartedAt": "2026-11-05T08:24:05.343310+00:00",
+  "renderShutdownAfterIdleStart": true,
+  "renderShutdownAt": "2026-11-05T08:39:03.213810958Z",
+  "renderInstance": "srv-dbhlcjgn74is73ebtrkg-cwf8p",
+  "neonIdle": true,
+  "neonEndpoint": "ep-long-butterfly-a1kxj7k1",
+  "neonSuspendedAt": "2026-11-05T08:44:01Z",
+  "testHarnessApplicationRequestsBeforeColdDelivery": 0,
+  "observationMethod": "Render application logs and Neon control-plane endpoint metadata only"
+}

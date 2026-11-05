@@ -1,0 +1,22 @@
+{
+  "environment": "Real GitHub Actions from panstr-webboard-forum -> Render production Oregon -> Neon production Singapore",
+  "commit": "d5c46f8c14abe1a1a35ef76bf30046baa054fe64",
+  "commitAt": "2026-11-05T08:19:32Z",
+  "receivedAt": "2026-11-05T08:19:43.533812Z",
+  "visibleAt": "2026-11-05T08:20:06.288Z",
+  "source": "actions",
+  "deliveryId": "actions:41993588576",
+  "unreadPersistedAcrossReload": true,
+  "explicitReview": true,
+  "returnNoteSaved": true,
+  "browserLogout": true,
+  "protectedRouteRedirectAfterLogout": true,
+  "mobileOverflow": false,
+  "browserErrors": [],
+  "pushToRecordedReceiptMs": 11534,
+  "recordedReceiptToVisibleMs": 22754,
+  "senderAcceptedAt": "2026-11-05T08:19:45.019011+00:00",
+  "pushToHTTP200Ms": 13019,
+  "senderAcceptedToVisibleMs": 21269,
+  "timestampNotes": "receivedAt is the PostgreSQL transaction timestamp, not an exact commit timestamp. HTTP 200 is returned after commit. GitHub commit time has whole-second precision."
+}

@@ -1,0 +1,9 @@
+{
+  "idleStartedAt": "2026-11-05T08:24:05.343310+00:00",
+  "coldPushNotBefore": "2026-11-05T08:41:05.343310+00:00",
+  "minimumIdleSeconds": 1020,
+  "testHarnessRequestsDuringIdle": 0,
+  "alsoRequireObservedRenderShutdownAndNeonIdle": true,
+  "productionDeploy": "dep-dbm3m67b9u1s738cv1pg",
+  "productionCommit": "8977a289aed200492080822c139f2a822682783a"
+}

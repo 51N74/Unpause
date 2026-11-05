@@ -1,0 +1,9 @@
+{
+  "observedAt": "2026-11-05T08:47:40.751484+00:00",
+  "httpStatus": 200,
+  "body": {
+    "database": "ok",
+    "status": "ok",
+    "timestamp": "2026-11-05T08:47:40.636Z"
+  }
+}

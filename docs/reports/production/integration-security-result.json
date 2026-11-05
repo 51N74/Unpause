@@ -1,0 +1,169 @@
+{
+  "checkedAt": "2026-11-05T08:22:03.820481+00:00",
+  "allPassed": true,
+  "checks": [
+    {
+      "name": "read activity before invalid deliveries",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "name": "invalid integration secret",
+      "status": 401,
+      "passed": true
+    },
+    {
+      "name": "wrong repository identity",
+      "status": 403,
+      "passed": true
+    },
+    {
+      "name": "wrong configured branch",
+      "status": 403,
+      "passed": true
+    },
+    {
+      "name": "unknown payload field",
+      "status": 400,
+      "passed": true
+    },
+    {
+      "name": "oversized delivery",
+      "status": 400,
+      "passed": true
+    },
+    {
+      "name": "invalid commit SHA",
+      "status": 400,
+      "passed": true
+    },
+    {
+      "name": "duplicate authenticated delivery",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "name": "read activity after duplicate",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "name": "duplicate and rejected deliveries preserve sequence/unique commits",
+      "passed": true
+    },
+    {
+      "name": "integration does not edit parent context",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "name": "Project.updatedAt, authored rationale and open issue preserved",
+      "passed": true
+    },
+    {
+      "name": "create separate scratch connection",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "name": "credential cannot cross connection",
+      "status": 401,
+      "passed": true
+    },
+    {
+      "name": "save scratch note before unlink",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "name": "archive connected project",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "name": "archived integration rejects ingestion",
+      "status": 409,
+      "passed": true
+    },
+    {
+      "name": "archived return context is read-only",
+      "status": 409,
+      "passed": true
+    },
+    {
+      "name": "archived state is truthful",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "name": "restore connected scratch project",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "name": "rotate scratch integration credential",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "name": "rotated old credential revoked",
+      "status": 401,
+      "passed": true
+    },
+    {
+      "name": "new credential accepts bounded payload",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "name": "normal read does not expose credential",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "name": "review marker cannot acknowledge future updates",
+      "status": 400,
+      "passed": true
+    },
+    {
+      "name": "explicitly review scratch received sequence",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "name": "explicit review clears unread",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "name": "unlink scratch integration",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "name": "unlinked secret revoked",
+      "status": 401,
+      "passed": true
+    },
+    {
+      "name": "unlink preserves authored return note",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "name": "archive completed disposable verification project",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "name": "valid schema within field/count bounds but over 256KiB rejected without writes",
+      "status": 400,
+      "encodedBytes": 314666,
+      "passed": true
+    }
+  ],
+  "primaryUniqueCommits": 101,
+  "primarySequenceUnchangedByDuplicate": true,
+  "projectContextPreserved": true,
+  "primaryConnectionState": "Receiving updates"
+}

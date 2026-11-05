@@ -1,0 +1,32 @@
+{
+  "originalErrors": [
+    {
+      "timestamp": "2026-11-05T08:46:38.071619475Z",
+      "message": "2026/11/05 08:46:38 [Error c000411a-298b-41ca-81c5-102c62b12ee9] internal server error"
+    },
+    {
+      "timestamp": "2026-11-05T08:46:43.442342855Z",
+      "message": "2026/11/05 08:46:43 [Error 3b2171b4-2b95-4194-ac6a-66107becc7ae] internal server error"
+    }
+  ],
+  "replayWithoutWaiting": {
+    "serverErrors": [
+      {
+        "timestamp": "2026-11-05T08:50:50.888006203Z",
+        "message": "2026/11/05 08:50:50 [Error b21ec67e-3632-4e29-aa61-1e55c1b2029b] internal server error"
+      },
+      {
+        "timestamp": "2026-11-05T08:50:55.119626951Z",
+        "message": "2026/11/05 08:50:55 [Error b5b862ad-e094-44de-90f0-68cf65e949c5] internal server error"
+      }
+    ],
+    "http500ObservedByBrowser": false
+  },
+  "settledNavigation": {
+    "startTime": "2026-11-05T08:53:23Z",
+    "endTime": "2026-11-05T08:53:44.746553531Z",
+    "serverErrorCount": 0,
+    "http500ObservedByBrowser": false
+  },
+  "interpretation": "Errors correlate with immediate navigation while project-list/sync requests are still in flight; waiting for both requests to finish eliminated the logs. Original server logging omits the error cause, so client cancellation is an inference, not a definitive diagnosis. No application logging or error handling was changed."
+}

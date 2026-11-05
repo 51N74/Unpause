@@ -87,14 +87,11 @@ Script สร้าง Scope, Issue พร้อม next action, pinned Decision
 
 ## วัด warm และ idle deployment จริง
 
-ยังไม่มีผลทดสอบ Render/Neon หรือ workflow บนบัญชีจริงจากงานนี้ ต้องวัดแยกจากการทดสอบในเครื่อง:
+มีผล [staging จริง](UNPAUSE_STAGING_LIVE_VERIFICATION_TH.md) และ [production rollout](UNPAUSE_PRODUCTION_ROLLOUT_TH.md) พร้อมแยก source commit, Actions run, browser และข้อจำกัดแล้ว ดู [วิธีตรวจเองและ release](UNPAUSE_SELF_CHECK_AND_RELEASE_TH.md) สำหรับขั้นตอนทวนสอบ
 
-| สภาวะ | เวลา push | เวลา server รับ | เวลา UI แสดง | ใช้ sender หรือ recovery | ผล/หมายเหตุ |
-|---|---|---|---|---|---|
-| Warm deployment | ยังไม่ได้วัด | — | — | — | — |
-| หลัง idle จน hosting หลับ | ยังไม่ได้วัด | — | — | — | — |
+ถ้าวัดใหม่ ให้แยกเวลา push, `receivedAt`, sender ได้ HTTP 200 และเวลาที่ UI เห็นออกจากกัน `receivedAt` ใช้ PostgreSQL transaction timestamp จึงไม่ใช่เวลา commit transaction ที่แม่นยำ; HTTP 200 ของ sender ยืนยันว่าฝั่ง API commit แล้ว ชื่อเวลา commit จาก GitHub มีความละเอียดเป็นวินาที
 
-ใช้เวลา Actions run/event ประกอบการ push และ `receivedAt` จาก API แยก **push → stored** ออกจาก **stored → visible** หลังปล่อย idle ทดสอบทั้งเปิด Resume ค้างไว้และปิด browser ตอน push ถ้าส่งไม่สำเร็จให้เข้า Resume/manual sync ตรวจว่า recovery ไม่สร้าง SHA ซ้ำ ถ้าเกิน history window ต้องเห็นข้อความเตือน อย่าใช้ผลจำลอง 503 ในเครื่องแทน latency บน Render จริง
+หลังปล่อย idle ต้องมีหลักฐานว่า hosting พักจริงก่อน push ไม่เปิด Resume/polling เพื่อปลุกระบบก่อนคำขอจาก Actions การตรวจผ่าน control plane ทำได้ แต่ SQL/health request อาจปลุกฐานข้อมูลหรือ service ถ้า delivery หายให้ทดสอบ public API recovery และตรวจว่า source/receipt/unread แสดงตามจริง โดยไม่สร้าง SHA ซ้ำ ถ้าติด quota ให้บันทึก error ตามจริงแทนการนับว่า recovery ผ่าน
 
 ให้เพื่อนในคอร์สทดลองกลับมาเปิดโปรเจกต์และระบุ 3 ข้อ: เปลี่ยนอะไร, ทำไมเลือกแนวทางนี้, และควรเริ่มทำอะไรต่อ บันทึกข้อสังเกตจริงแทนการสมมติผลประเมิน
 
