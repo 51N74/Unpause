@@ -1,0 +1,14 @@
+[
+  {
+    "step": "direct-up",
+    "exitCode": 0,
+    "migration2Applied": true,
+    "noPendingMigrations": false
+  },
+  {
+    "step": "pooled-idempotent-up",
+    "exitCode": 0,
+    "migration2Applied": false,
+    "noPendingMigrations": true
+  }
+]

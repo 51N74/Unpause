@@ -1,0 +1,202 @@
+{
+  "baseURL": "https://unpause-pey1.onrender.com",
+  "checkedAt": "2026-11-05T07:55:30.288197+00:00",
+  "allPassed": true,
+  "checks": [
+    {
+      "name": "unauthenticated project access",
+      "status": 401,
+      "passed": true
+    },
+    {
+      "name": "pre-deploy project survives migration",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "name": "baseline authored context and security headers preserved",
+      "passed": true
+    },
+    {
+      "name": "login and cookie attributes",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "name": "Secure HttpOnly SameSite=Lax cookie; no passwordHash response",
+      "passed": true
+    },
+    {
+      "name": "wrong password rejected",
+      "status": 401,
+      "passed": true
+    },
+    {
+      "name": "cross-origin mutation rejected",
+      "status": 403,
+      "passed": true
+    },
+    {
+      "name": "cross-site request without Origin rejected",
+      "status": 403,
+      "passed": true
+    },
+    {
+      "name": "immutable scope version rejected",
+      "status": 405,
+      "passed": true
+    },
+    {
+      "name": "invalid issue status rejected",
+      "status": 400,
+      "passed": true
+    },
+    {
+      "name": "edit issue through production",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "name": "restore test issue state",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "name": "edit decision outcome",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "name": "create disposable project for lifecycle tests",
+      "status": 201,
+      "passed": true
+    },
+    {
+      "name": "create disposable issue",
+      "status": 201,
+      "passed": true
+    },
+    {
+      "name": "create disposable decision",
+      "status": 201,
+      "passed": true
+    },
+    {
+      "name": "create second scope version",
+      "status": 201,
+      "passed": true
+    },
+    {
+      "name": "decision retains original scope binding",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "name": "delete disposable decision",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "name": "delete disposable issue",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "name": "archive disposable project",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "name": "archived project rejects writes",
+      "status": 409,
+      "passed": true
+    },
+    {
+      "name": "restore disposable project",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "name": "register isolated second owner",
+      "status": 201,
+      "passed": true
+    },
+    {
+      "name": "cross-owner GET /projects/:projectId",
+      "status": 404,
+      "passed": true
+    },
+    {
+      "name": "cross-owner GET /projects/:projectId/resume-context",
+      "status": 404,
+      "passed": true
+    },
+    {
+      "name": "cross-owner GET /projects/:projectId/github",
+      "status": 404,
+      "passed": true
+    },
+    {
+      "name": "cross-owner PATCH /projects/:projectId",
+      "status": 404,
+      "passed": true
+    },
+    {
+      "name": "cross-owner GET /projects/:projectId/issues/d456b6ea-3809-4fc6-8160-8dac58d0e850",
+      "status": 404,
+      "passed": true
+    },
+    {
+      "name": "cross-owner GET /projects/:projectId/decisions/79e2f8c5-ef95-4859-bd2e-81e0bfe6d710",
+      "status": 404,
+      "passed": true
+    },
+    {
+      "name": "cross-owner PUT /projects/:projectId/return-context",
+      "status": 404,
+      "passed": true
+    },
+    {
+      "name": "create other-owner project",
+      "status": 201,
+      "passed": true
+    },
+    {
+      "name": "create other-owner issue",
+      "status": 201,
+      "passed": true
+    },
+    {
+      "name": "foreign focus issue rejected",
+      "status": 400,
+      "passed": true
+    },
+    {
+      "name": "save Unicode return note and own focus",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "name": "return context persists",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "name": "create revocation session",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "name": "logout production session",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "name": "revoked session cookie rejected",
+      "status": 401,
+      "passed": true
+    }
+  ],
+  "projectId": "0ab77afb-a394-448a-a7dc-7283cd2bb21f",
+  "preDeployContextPreserved": true
+}

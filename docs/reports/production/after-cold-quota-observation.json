@@ -1,0 +1,10 @@
+{
+  "observedAt": "2026-11-05T08:47:33.221282+00:00",
+  "connection": {
+    "lastDeliveryReceivedAt": "2026-11-05T08:45:25.097492Z",
+    "lastSyncedAt": "2026-11-05T08:23:57.872936Z",
+    "state": "Needs attention"
+  },
+  "unread": 1,
+  "actionsDataStillVisible": true
+}

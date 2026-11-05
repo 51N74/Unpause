@@ -1,0 +1,18 @@
+{
+  "runId": 41993588576,
+  "attempt": 2,
+  "conclusion": "success",
+  "before": {
+    "sequence": 3,
+    "uniqueCommits": 101,
+    "logicalGroups": 2,
+    "unread": 0
+  },
+  "after": {
+    "sequence": 3,
+    "uniqueCommits": 101,
+    "logicalGroups": 2,
+    "unread": 0
+  },
+  "duplicateDeliveryDidNotCreateUnread": true
+}

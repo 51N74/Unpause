@@ -1,0 +1,91 @@
+{
+  "runId": 41996886317,
+  "runURL": "https://github.com/51N74/panstr-webboard-forum/actions/runs/41996886317",
+  "jobId": 127142141413,
+  "attempt": 1,
+  "conclusion": "success",
+  "senderAcceptedAt": "2026-11-05T08:45:26.675748+00:00",
+  "temporaryDeliveryFailures": 0,
+  "jobs": [
+    {
+      "id": 127142141413,
+      "name": "deliver",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 41996886317,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Send bounded commit metadata",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        }
+      ]
+    }
+  ],
+  "startupLogs": [
+    {
+      "id": "952251ea-2b48-4d10-927d-cb2f36642e88",
+      "labels": [
+        {
+          "name": "resource",
+          "value": "srv-dbhlcjgn74is73ebtrkg"
+        },
+        {
+          "name": "instance",
+          "value": "srv-dbhlcjgn74is73ebtrkg-dfvgm"
+        },
+        {
+          "name": "level",
+          "value": "info"
+        },
+        {
+          "name": "type",
+          "value": "app"
+        }
+      ],
+      "message": "2026/11/05 08:45:19 goose: no migrations to run. current version: 2",
+      "timestamp": "2026-11-05T08:45:19.719630263Z"
+    },
+    {
+      "id": "66b6fb39-3e10-477c-971c-69eea31c8275",
+      "labels": [
+        {
+          "name": "resource",
+          "value": "srv-dbhlcjgn74is73ebtrkg"
+        },
+        {
+          "name": "instance",
+          "value": "srv-dbhlcjgn74is73ebtrkg-dfvgm"
+        },
+        {
+          "name": "level",
+          "value": "info"
+        },
+        {
+          "name": "type",
+          "value": "app"
+        }
+      ],
+      "message": "2026/11/05 08:45:19 Unpause Go/Gin API listening on 0.0.0.0:10000 (production)",
+      "timestamp": "2026-11-05T08:45:19.719810506Z"
+    }
+  ],
+  "neonAfter": {
+    "state": "active",
+    "startedAt": "2026-11-05T08:45:18Z"
+  }
+}

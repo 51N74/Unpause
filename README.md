@@ -59,7 +59,7 @@ Unpause keeps Scope, Decisions and next actions authored by the owner, and can d
 - **GitHub Continuity in Resume:**
   - Connect one public repository and its configured default branch, install a GitHub Actions sender with a per-connection secret, and receive grouped commits without an open browser session.
   - Includes bounded retries, idempotent ingestion, public API catch-up, explicit unread review markers, a return note and a focus issue. Archived projects pause ingestion; unlinking revokes the credential and removes integration cache.
-  - Public GitHub quotas can temporarily block catch-up while Actions delivery continues. See the [setup guide](docs/UNPAUSE_GITHUB_CONTINUITY_SETUP_TH.md) and [live staging verification](docs/UNPAUSE_STAGING_LIVE_VERIFICATION_TH.md).
+  - Public GitHub quotas can temporarily block catch-up while Actions delivery continues. See the [setup guide](docs/UNPAUSE_GITHUB_CONTINUITY_SETUP_TH.md), [live staging verification](docs/UNPAUSE_STAGING_LIVE_VERIFICATION_TH.md), and [production rollout](docs/UNPAUSE_PRODUCTION_ROLLOUT_TH.md).
 - **GitHub Repository Explorer (`/github`):**
   - Authenticated proxy search against the GitHub REST API (`/search/repositories`) with query, language, minimum stars, and pagination parameters, plus explicit handling for upstream rate limits (`429 GITHUB_RATE_LIMIT`) and upstream errors (`502 GITHUB_UPSTREAM_ERROR`).
 - **User Profile Settings (`/settings`):**
@@ -429,7 +429,7 @@ All API routes are mounted under **`/api/v1`** in [`apps/api-go/internal/http/ro
 
 Unpause is configured for deployment as **one Render Web Service** using the repository's multi-stage [`Dockerfile`](./Dockerfile) and [`render.yaml`](./render.yaml), backed by an external **Neon PostgreSQL** database.
 
-> **Important Note on Verification State:** The backend/frontend test suites, production asset build (`apps/web/dist`), Go binary compilation (`apps/api-go/bin/{server,migrate}`), and local single-origin production runtime have been verified. A separate Render/Neon staging deployment and real GitHub Actions delivery have also been verified; see the [live staging report](docs/UNPAUSE_STAGING_LIVE_VERIFICATION_TH.md) for measured results and limitations. The existing production service was not changed.
+> **Important Note on Verification State:** The backend/frontend test suites, production asset build (`apps/web/dist`), Go binary compilation (`apps/api-go/bin/{server,migrate}`), and local single-origin production runtime have been verified. A separate Render/Neon staging deployment and real GitHub Actions delivery have also been verified. The integration has subsequently been merged and deployed to production; see the [production rollout report](docs/UNPAUSE_PRODUCTION_ROLLOUT_TH.md) for measured results, fixes and remaining verification status, and the [self-check/release guide](docs/UNPAUSE_SELF_CHECK_AND_RELEASE_TH.md) for repeatable steps.
 
 ### Step 1: Create a Neon PostgreSQL Database (Manual)
 

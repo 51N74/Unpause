@@ -1,0 +1,163 @@
+{
+  "coldCommitVisible": true,
+  "unreadPersistedAcrossReload": true,
+  "returnNotePersisted": true,
+  "browserErrors": [],
+  "mobileOverflow": false,
+  "responses": [
+    {
+      "path": "/api/v1/auth/me",
+      "status": 401,
+      "at": "2026-11-05T08:53:28.069Z"
+    },
+    {
+      "path": "/api/v1/auth/login",
+      "status": 200,
+      "at": "2026-11-05T08:53:29.504Z"
+    },
+    {
+      "path": "/api/v1/projects",
+      "status": 200,
+      "at": "2026-11-05T08:53:30.175Z"
+    },
+    {
+      "path": "/api/v1/auth/me",
+      "status": 200,
+      "at": "2026-11-05T08:53:30.968Z"
+    },
+    {
+      "path": "/api/v1/projects/0ab77afb-a394-448a-a7dc-7283cd2bb21f",
+      "status": 200,
+      "at": "2026-11-05T08:53:32.062Z"
+    },
+    {
+      "path": "/api/v1/projects/0ab77afb-a394-448a-a7dc-7283cd2bb21f/resume-context",
+      "status": 200,
+      "at": "2026-11-05T08:53:32.110Z"
+    },
+    {
+      "path": "/api/v1/projects/0ab77afb-a394-448a-a7dc-7283cd2bb21f/github",
+      "status": 200,
+      "at": "2026-11-05T08:53:33.670Z"
+    },
+    {
+      "path": "/api/v1/projects/0ab77afb-a394-448a-a7dc-7283cd2bb21f/github/sync",
+      "status": 200,
+      "at": "2026-11-05T08:53:34.873Z"
+    },
+    {
+      "path": "/api/v1/projects/0ab77afb-a394-448a-a7dc-7283cd2bb21f/github",
+      "status": 200,
+      "at": "2026-11-05T08:53:36.341Z"
+    },
+    {
+      "path": "/api/v1/auth/me",
+      "status": 200,
+      "at": "2026-11-05T08:53:37.140Z"
+    },
+    {
+      "path": "/api/v1/projects/0ab77afb-a394-448a-a7dc-7283cd2bb21f",
+      "status": 200,
+      "at": "2026-11-05T08:53:37.957Z"
+    },
+    {
+      "path": "/api/v1/projects/0ab77afb-a394-448a-a7dc-7283cd2bb21f/resume-context",
+      "status": 200,
+      "at": "2026-11-05T08:53:38.286Z"
+    },
+    {
+      "path": "/api/v1/projects/0ab77afb-a394-448a-a7dc-7283cd2bb21f/github",
+      "status": 200,
+      "at": "2026-11-05T08:53:39.812Z"
+    },
+    {
+      "path": "/api/v1/projects/0ab77afb-a394-448a-a7dc-7283cd2bb21f/github/sync",
+      "status": 200,
+      "at": "2026-11-05T08:53:41.051Z"
+    },
+    {
+      "path": "/api/v1/projects/0ab77afb-a394-448a-a7dc-7283cd2bb21f/github",
+      "status": 200,
+      "at": "2026-11-05T08:53:42.626Z"
+    }
+  ],
+  "aborted": [],
+  "requests": [
+    {
+      "path": "/api/v1/auth/me",
+      "method": "GET",
+      "at": "2026-11-05T08:53:27.803Z"
+    },
+    {
+      "path": "/api/v1/auth/login",
+      "method": "POST",
+      "at": "2026-11-05T08:53:28.392Z"
+    },
+    {
+      "path": "/api/v1/projects",
+      "method": "GET",
+      "at": "2026-11-05T08:53:29.580Z"
+    },
+    {
+      "path": "/api/v1/auth/me",
+      "method": "GET",
+      "at": "2026-11-05T08:53:30.548Z"
+    },
+    {
+      "path": "/api/v1/projects/0ab77afb-a394-448a-a7dc-7283cd2bb21f/resume-context",
+      "method": "GET",
+      "at": "2026-11-05T08:53:31.005Z"
+    },
+    {
+      "path": "/api/v1/projects/0ab77afb-a394-448a-a7dc-7283cd2bb21f",
+      "method": "GET",
+      "at": "2026-11-05T08:53:31.005Z"
+    },
+    {
+      "path": "/api/v1/projects/0ab77afb-a394-448a-a7dc-7283cd2bb21f/github",
+      "method": "GET",
+      "at": "2026-11-05T08:53:32.170Z"
+    },
+    {
+      "path": "/api/v1/projects/0ab77afb-a394-448a-a7dc-7283cd2bb21f/github/sync",
+      "method": "POST",
+      "at": "2026-11-05T08:53:33.741Z"
+    },
+    {
+      "path": "/api/v1/projects/0ab77afb-a394-448a-a7dc-7283cd2bb21f/github",
+      "method": "GET",
+      "at": "2026-11-05T08:53:34.874Z"
+    },
+    {
+      "path": "/api/v1/auth/me",
+      "method": "GET",
+      "at": "2026-11-05T08:53:36.697Z"
+    },
+    {
+      "path": "/api/v1/projects/0ab77afb-a394-448a-a7dc-7283cd2bb21f/resume-context",
+      "method": "GET",
+      "at": "2026-11-05T08:53:37.189Z"
+    },
+    {
+      "path": "/api/v1/projects/0ab77afb-a394-448a-a7dc-7283cd2bb21f",
+      "method": "GET",
+      "at": "2026-11-05T08:53:37.190Z"
+    },
+    {
+      "path": "/api/v1/projects/0ab77afb-a394-448a-a7dc-7283cd2bb21f/github",
+      "method": "GET",
+      "at": "2026-11-05T08:53:38.340Z"
+    },
+    {
+      "path": "/api/v1/projects/0ab77afb-a394-448a-a7dc-7283cd2bb21f/github/sync",
+      "method": "POST",
+      "at": "2026-11-05T08:53:39.877Z"
+    },
+    {
+      "path": "/api/v1/projects/0ab77afb-a394-448a-a7dc-7283cd2bb21f/github",
+      "method": "GET",
+      "at": "2026-11-05T08:53:41.051Z"
+    }
+  ],
+  "verifiedAt": "2026-11-05T08:53:42.675Z"
+}

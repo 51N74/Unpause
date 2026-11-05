@@ -1,0 +1,191 @@
+{
+  "date": "2026-11-05",
+  "productionURL": "https://unpause-pey1.onrender.com",
+  "workspaceId": "tea-da9b4qon74is73fgp25g",
+  "serviceId": "srv-dbhlcjgn74is73ebtrkg",
+  "autoDeployTrigger": "checksPass",
+  "sourceCommit": "8977a289aed200492080822c139f2a822682783a",
+  "deployId": "dep-dbm3m67b9u1s738cv1pg",
+  "liveAt": "2026-11-05T08:16:39.529892Z",
+  "prs": [
+    {
+      "number": 1,
+      "merge": "6f99fdd4882a765ff6b2881c8b72d4801841f79c",
+      "prCI": 41989190192,
+      "mainCI": 41989702582
+    },
+    {
+      "number": 2,
+      "fix": "c2702298b77a8f158491968c48fc426775b0bc3b",
+      "merge": "8977a289aed200492080822c139f2a822682783a",
+      "prCI": 41992252666,
+      "mainCI": 41992709898
+    }
+  ],
+  "mainCIJobs": [
+    {
+      "id": 127128490548,
+      "name": "verify",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 41992709898,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Install locked dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Audit npm dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "API and frontend regression tests",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Legacy Node API regression tests",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Sender retry and payload tests",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Compile application and legacy API",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Go race detector and static checks",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Go vulnerability check",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Install isolated browser test tooling",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Browser integration test",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Production Docker build",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        },
+        {
+          "name": "Upload browser evidence",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Post Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 30
+        },
+        {
+          "name": "Post Run actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 31
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 32
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 33
+        }
+      ]
+    }
+  ],
+  "startupLogs": [
+    {
+      "timestamp": "2026-11-05T08:16:30.689670804Z",
+      "message": "2026/11/05 08:16:30 goose: no migrations to run. current version: 2",
+      "instance": "srv-dbhlcjgn74is73ebtrkg-cwf8p"
+    },
+    {
+      "timestamp": "2026-11-05T08:16:30.689869626Z",
+      "message": "2026/11/05 08:16:30 Unpause Go/Gin API listening on 0.0.0.0:10000 (production)",
+      "instance": "srv-dbhlcjgn74is73ebtrkg-cwf8p"
+    }
+  ],
+  "configurationChecks": {
+    "productionEndpointMatched": true,
+    "database": "neondb",
+    "pooled": true,
+    "tlsRequired": true,
+    "nodeEnvProduction": true,
+    "autoMigrate": true,
+    "corsProductionOrigin": true,
+    "sessionSecretLength": 44,
+    "cookieSecure": true,
+    "cookieHttpOnly": true,
+    "cookieSameSiteLax": true,
+    "healthCheckPath": "/api/v1/health"
+  },
+  "credentialRemediation": {
+    "productionRoleRotated": true,
+    "backupRoleRotated": true,
+    "rehearsalRoleRotated": true,
+    "renderURLUpdatedWithoutReplacingOtherKeys": true,
+    "clipboardCleared": true,
+    "credentialValuesStoredInEvidence": false
+  }
+}

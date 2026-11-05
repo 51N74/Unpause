@@ -2,6 +2,8 @@
 
 วันที่ 4 พฤศจิกายน 2026 · Branch `codex/github-continuity`
 
+ผล release ภายหลังและ CI ที่ทวนสอบวันที่ 5 พฤศจิกายนอยู่ใน [รายงาน production rollout](UNPAUSE_PRODUCTION_ROLLOUT_TH.md)
+
 ## การแก้ไข
 
 อัปเดตเฉพาะ dependencies ที่มี advisory และส่วน compatibility ที่เกี่ยวข้อง ไม่เปลี่ยน domain behavior หรือ schema ของ Scope/Decision/Issue

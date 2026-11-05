@@ -1,0 +1,8 @@
+2026/11/05 15:06:55 OK   00001_init_schema.sql (97.04ms)
+2026/11/05 15:06:55 OK   00002_github_continuity.sql (47.11ms)
+2026/11/05 15:06:55 goose: successfully migrated database to version: 2
+--- FAIL: TestGitHubContinuity (4.31s)
+    continuity_test.go:386: full history window failed with database latency: timeout: context already done: context deadline exceeded
+FAIL
+FAIL	github.com/westride/unpause/api-go/tests	4.525s
+FAIL

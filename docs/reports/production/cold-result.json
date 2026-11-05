@@ -1,0 +1,20 @@
+{
+  "environment": "Real forum GitHub Actions -> idle Render production Oregon -> Neon production Singapore",
+  "commit": "7a5619bd180333b343958f1b6e2ae111ea9aa72f",
+  "commitAt": "2026-11-05T08:45:05Z",
+  "receivedAt": "2026-11-05T08:45:25.097492Z",
+  "source": "actions",
+  "deliveryId": "actions:41996886317",
+  "unread": 1,
+  "logicalGroups": 4,
+  "uniqueCommits": 103,
+  "noDuplicateCommits": true,
+  "returnNotePersisted": true,
+  "projectUpdatedAtUnchanged": true,
+  "connectionState": "Receiving updates",
+  "verifiedAt": "2026-11-05T08:46:21.306139+00:00",
+  "pushToRecordedReceiptMs": 20097,
+  "senderAcceptedAt": "2026-11-05T08:45:26.675748+00:00",
+  "pushToHTTP200Ms": 21676,
+  "timestampNotes": "receivedAt is PostgreSQL transaction timestamp, not exact commit time; HTTP 200 confirms committed delivery. Browser was opened after delivery completed, so cold push-to-visible latency was not measured."
+}
