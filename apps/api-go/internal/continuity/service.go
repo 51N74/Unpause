@@ -262,17 +262,25 @@ func store(ctx context.Context, tx pgx.Tx, r *Connection, d Delivery, source str
 	if err != nil {
 		return err
 	}
-	for _, c := range d.Commits {
-		_, err = tx.Exec(ctx, `INSERT INTO git_activity(connection_id,sha,delivery_id,message,author_name,event_at) VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT(connection_id,sha) DO NOTHING`, r.ID, c.SHA, d.DeliveryID, c.Message, c.Author, c.EventAt)
-		if err != nil {
-			return err
-		}
-	}
+	// Write the bounded window in one database round trip. Per-commit inserts can
+	// exhaust recovery's deadline when the API and database are in different regions.
+	shas := make([]string, len(d.Commits))
+	messages := make([]string, len(d.Commits))
+	authors := make([]string, len(d.Commits))
+	eventTimes := make([]time.Time, len(d.Commits))
 	latest := d.Commits[0].EventAt
-	for _, c := range d.Commits {
+	for i, c := range d.Commits {
+		shas[i], messages[i], authors[i], eventTimes[i] = c.SHA, c.Message, c.Author, c.EventAt
 		if c.EventAt.After(latest) {
 			latest = c.EventAt
 		}
+	}
+	_, err = tx.Exec(ctx, `INSERT INTO git_activity(connection_id,sha,delivery_id,message,author_name,event_at)
+  SELECT $1,c.sha,$2,c.message,c.author_name,c.event_at
+  FROM unnest($3::text[],$4::text[],$5::text[],$6::timestamptz[]) AS c(sha,message,author_name,event_at)
+  ON CONFLICT(connection_id,sha) DO NOTHING`, r.ID, d.DeliveryID, shas, messages, authors, eventTimes)
+	if err != nil {
+		return err
 	}
 	_, err = tx.Exec(ctx, `UPDATE project_repository SET sequence=$1,incomplete=incomplete OR $2,last_git_activity_at=GREATEST(last_git_activity_at,$3) WHERE id=$4`, r.Sequence, d.Incomplete, latest, r.ID)
 	return err

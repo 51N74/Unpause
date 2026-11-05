@@ -11,9 +11,24 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/westride/unpause/api-go/internal/continuity"
 	"github.com/westride/unpause/api-go/internal/http/router"
 )
+
+// A small per-query delay models a database in a different region. A full
+// recovery window must finish within the service's existing bounded deadline.
+type continuityQueryLatency struct{}
+
+func (continuityQueryLatency) TraceQueryStart(ctx context.Context, _ *pgx.Conn, _ pgx.TraceQueryStartData) context.Context {
+	select {
+	case <-time.After(40 * time.Millisecond):
+	case <-ctx.Done():
+	}
+	return ctx
+}
+func (continuityQueryLatency) TraceQueryEnd(context.Context, *pgx.Conn, pgx.TraceQueryEndData) {}
 
 func TestGitHubContinuity(t *testing.T) {
 	ctx := context.Background()
@@ -354,13 +369,40 @@ func TestGitHubContinuity(t *testing.T) {
 	for i := range history {
 		history[i] = fmt.Sprintf("%040x", i+1)
 	}
-	testPool.Exec(ctx, `UPDATE project_repository SET last_attempt_at=NULL WHERE project_id=$1`, p2)
-	if err = svc.Sync(ctx, user, p2, true); err != nil {
+	latencyConfig := testPool.Config()
+	latencyConfig.ConnConfig.Tracer = continuityQueryLatency{}
+	latencyPool, err := pgxpool.NewWithConfig(ctx, latencyConfig)
+	if err != nil {
 		t.Fatal(err)
+	}
+	defer latencyPool.Close()
+	boundedRecovery := continuity.NewService(latencyPool, upstream.URL, nil)
+	testPool.Exec(ctx, `UPDATE project_repository SET last_attempt_at=NULL WHERE project_id=$1`, p2)
+	// The in-memory test server supports one client connection at a time.
+	testPool.Reset()
+	err = boundedRecovery.Sync(ctx, user, p2, true)
+	latencyPool.Reset()
+	if err != nil {
+		t.Fatal("full history window failed with database latency:", err)
 	}
 	fullWindow, err := svc.View(ctx, user, p2)
 	if err != nil || !fullWindow.Connection.Incomplete {
 		t.Fatal("full recovery window not flagged incomplete", err)
+	}
+	var commitCount int
+	if err = testPool.QueryRow(ctx, `SELECT count(*) FROM git_activity WHERE connection_id=$1`, fullWindow.Connection.ID).Scan(&commitCount); err != nil || commitCount != 101 {
+		t.Fatalf("full window lost or duplicated commits: count=%d err=%v", commitCount, err)
+	}
+	// Repeating recovery must preserve the same unique commits under that latency.
+	testPool.Exec(ctx, `UPDATE project_repository SET last_attempt_at=NULL WHERE project_id=$1`, p2)
+	testPool.Reset()
+	err = boundedRecovery.Sync(ctx, user, p2, true)
+	latencyPool.Reset()
+	if err != nil {
+		t.Fatal("repeated full history recovery:", err)
+	}
+	if err = testPool.QueryRow(ctx, `SELECT count(*) FROM git_activity WHERE connection_id=$1`, fullWindow.Connection.ID).Scan(&commitCount); err != nil || commitCount != 101 {
+		t.Fatalf("repeated full window duplicated commits: count=%d err=%v", commitCount, err)
 	}
 
 	// Upstream repository replacement is never treated as the connected identity.
