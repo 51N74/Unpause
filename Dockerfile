@@ -15,6 +15,8 @@ COPY apps/api/package.json ./apps/api/package.json
 RUN npm ci --include=dev --workspace=@unpause/web
 
 COPY apps/web ./apps/web
+# The Resume setup screen bundles this downloadable workflow template.
+COPY docs/templates/unpause-github.yml ./docs/templates/unpause-github.yml
 
 ARG VITE_API_BASE_URL=/api/v1
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}

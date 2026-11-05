@@ -41,7 +41,7 @@ function resolveGoBinary() {
   }
 
   console.error(
-    'Error: Go toolchain ("go") was not found in PATH. Install Go >= 1.24 and ensure it is on PATH, or set GO_BIN to the Go executable path.'
+    'Error: Go toolchain ("go") was not found in PATH. Install Go >= 1.27.3 and ensure it is on PATH, or set GO_BIN to the Go executable path.'
   );
   process.exit(1);
 }

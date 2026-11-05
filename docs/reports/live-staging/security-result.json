@@ -1,0 +1,18 @@
+{
+  "invalidCredentialStatus": 401,
+  "wrongRepositoryStatus": 403,
+  "duplicateDeliveryStatus": 200,
+  "duplicateDeliveryKeptSequence": 1,
+  "commitCountBefore": 2,
+  "commitCountAfter": 2,
+  "crossOwnerProjectStatus": 404,
+  "crossOwnerActivityStatus": 404,
+  "projectUpdatedAtUnchanged": true,
+  "scopeDecisionIssueContextPreserved": true,
+  "cookieSecure": true,
+  "cookieHttpOnly": true,
+  "unread": 0,
+  "syncState": "Needs attention",
+  "lastDeliveryReceivedAt": "2026-11-04T15:39:06.153661Z",
+  "checkedAt": "2026-11-04T15:39:08.148410+00:00"
+}

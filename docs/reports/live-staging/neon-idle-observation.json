@@ -1,0 +1,14 @@
+{
+  "observedAt": "2026-11-04T15:51:03Z",
+  "projectId": "bitter-heart-13372336",
+  "endpointId": "ep-round-cloud-a1gr5rw9",
+  "state": "idle",
+  "lastActive": "2026-11-04T15:36:29Z",
+  "configuredSuspendTimeoutSeconds": 0,
+  "computeStates": [
+    {
+      "state": "idle",
+      "updatedAt": "2026-11-04T15:44:31Z"
+    }
+  ]
+}

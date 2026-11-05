@@ -2,19 +2,19 @@ import { z } from 'zod';
 
 const nonEmptyTrimmed = (fieldLabel: string, max = 5000) =>
   z
-    .string({ required_error: `${fieldLabel} is required` })
+    .string({ error: `${fieldLabel} is required` })
     .trim()
     .min(1, `${fieldLabel} is required`)
     .max(max, `${fieldLabel} must be at most ${max} characters`);
 
 export const registerSchema = z.object({
   email: z
-    .string({ required_error: 'Email is required' })
+    .string({ error: 'Email is required' })
     .trim()
     .email('Please provide a valid email address')
     .transform((v) => v.toLowerCase()),
   password: z
-    .string({ required_error: 'Password is required' })
+    .string({ error: 'Password is required' })
     .min(8, 'Password must be at least 8 characters')
     .max(128, 'Password must be at most 128 characters'),
   displayName: z
@@ -27,12 +27,12 @@ export const registerSchema = z.object({
 
 export const loginSchema = z.object({
   email: z
-    .string({ required_error: 'Email is required' })
+    .string({ error: 'Email is required' })
     .trim()
     .email('Please provide a valid email address')
     .transform((v) => v.toLowerCase()),
   password: z
-    .string({ required_error: 'Password is required' })
+    .string({ error: 'Password is required' })
     .min(1, 'Password is required'),
 });
 
@@ -182,7 +182,7 @@ export const updateDecisionSchema = z
   );
 
 export const pinDecisionSchema = z.object({
-  isPinned: z.boolean({ required_error: 'isPinned boolean is required' }),
+  isPinned: z.boolean({ error: 'isPinned boolean is required' }),
 });
 
 export const listDecisionsQuerySchema = z.object({
