@@ -1,10 +1,16 @@
 name: Continuity verification
 on:
   push:
-    branches: [codex/github-continuity]
+    branches: [main, codex/github-continuity]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
+defaults:
+  run:
+    # Explicit bash enables pipefail, including browser output piped into tee.
+    shell: bash
 jobs:
   verify:
     runs-on: ubuntu-24.04
