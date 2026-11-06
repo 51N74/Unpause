@@ -1,0 +1,147 @@
+{
+  "checkedAt": "2026-11-06T12:38:45.623242+00:00",
+  "environment": "https://unpause-pey1.onrender.com",
+  "allPassed": true,
+  "checks": [
+    {
+      "name": "ownerRegistered",
+      "httpStatus": 201,
+      "passed": true
+    },
+    {
+      "name": "otherRegistered",
+      "httpStatus": 201,
+      "passed": true
+    },
+    {
+      "name": "create private demo",
+      "httpStatus": 200,
+      "passed": true
+    },
+    {
+      "name": "create isolated other demo",
+      "httpStatus": 200,
+      "passed": true
+    },
+    {
+      "name": "demo requires authentication",
+      "httpStatus": 401,
+      "passed": true
+    },
+    {
+      "name": "demo ownership isolation",
+      "httpStatus": 404,
+      "passed": true
+    },
+    {
+      "name": "demo authored context",
+      "httpStatus": 200,
+      "passed": true
+    },
+    {
+      "name": "save demo note",
+      "httpStatus": 200,
+      "passed": true
+    },
+    {
+      "name": "repeated demo returns same project",
+      "httpStatus": 200,
+      "passed": true
+    },
+    {
+      "name": "demo preserves edits",
+      "httpStatus": 200,
+      "passed": true
+    },
+    {
+      "name": "connect public repository on isolated release project",
+      "httpStatus": 200,
+      "passed": true
+    },
+    {
+      "name": "reject wrong integration secret",
+      "httpStatus": 401,
+      "passed": true
+    },
+    {
+      "name": "authenticated delivery of real public commit metadata",
+      "httpStatus": 200,
+      "passed": true
+    },
+    {
+      "name": "save issue and decision links",
+      "httpStatus": 200,
+      "passed": true
+    },
+    {
+      "name": "read persisted links",
+      "httpStatus": 200,
+      "passed": true
+    },
+    {
+      "name": "other demo records",
+      "httpStatus": 200,
+      "passed": true
+    },
+    {
+      "name": "reject cross-project link",
+      "httpStatus": 400,
+      "passed": true
+    },
+    {
+      "name": "reject cross-user link mutation",
+      "httpStatus": 404,
+      "passed": true
+    },
+    {
+      "name": "reject unknown link fields",
+      "httpStatus": 400,
+      "passed": true
+    },
+    {
+      "name": "reject cross-origin link",
+      "httpStatus": 403,
+      "passed": true
+    },
+    {
+      "name": "links preserve note and unread",
+      "httpStatus": 200,
+      "passed": true
+    },
+    {
+      "name": "links preserve authored project modification time",
+      "httpStatus": 200,
+      "passed": true
+    },
+    {
+      "name": "archive release demo",
+      "httpStatus": 200,
+      "passed": true
+    },
+    {
+      "name": "archived links read only",
+      "httpStatus": 409,
+      "passed": true
+    },
+    {
+      "name": "archived pause note rejected",
+      "httpStatus": 409,
+      "passed": true
+    },
+    {
+      "name": "restore release demo",
+      "httpStatus": 200,
+      "passed": true
+    },
+    {
+      "name": "demo repeat preserves restored project",
+      "httpStatus": 200,
+      "passed": true
+    }
+  ],
+  "projectId": "f8fe5a6e-9325-5df3-b144-c1ac47f6e239",
+  "testedCommit": "7a5619bd180333b343958f1b6e2ae111ea9aa72f",
+  "commitMetadataSource": "Real public GitHub API. Delivery POST was a manual authenticated smoke test, not a GitHub Actions run.",
+  "otherUsersDataModified": false,
+  "forumRepositoryModified": false
+}

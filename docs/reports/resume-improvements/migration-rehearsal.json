@@ -1,0 +1,28 @@
+{
+  "checkedAt": "2026-11-06",
+  "baselineProductionCommit": "8977a289aed200492080822c139f2a822682783a",
+  "backupBranch": {
+    "name": "before-resume-improvements-20261106",
+    "id": "br-raspy-band-a1qj0d36",
+    "computeCreated": false
+  },
+  "rehearsalBranch": {
+    "name": "rehearsal-resume-improvements-20261106",
+    "id": "br-small-night-a1n7v742"
+  },
+  "migrationFile": "apps/api-go/migrations/00003_commit_links.sql",
+  "rehearsalMethod": "Applied exact Up SQL statements from source migration in one Neon MCP SQL transaction on isolated clone. Production will use compiled application Goose migration.",
+  "baseline": {
+    "schema": 2,
+    "projects": 6,
+    "cachedCommits": 203
+  },
+  "afterRehearsal": {
+    "projects": 6,
+    "cachedCommits": 203,
+    "links": 0,
+    "linkForeignKeys": 3
+  },
+  "productionSchemaChangedDuringRehearsal": false,
+  "credentialValuesRetrieved": false
+}
