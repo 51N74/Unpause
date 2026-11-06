@@ -64,7 +64,7 @@ export const GitHubContinuity: React.FC<Props> = ({projectId, archived, issues})
         </TextField>
         <Stack direction="row" spacing={1}><Button disabled={busy || archived} onClick={() => void act(async () => {await continuityApi.saveContext(projectId, note ?? data.returnNote, focus || null); setEditing(false); setNote(null);})}>Save return context</Button><Button onClick={() => {setEditing(false);setNote(null);}}>Cancel</Button></Stack>
       </> : <>
-        <Typography sx={{whiteSpace: 'pre-wrap'}}>{data.returnNote || 'Leave an optional note for your next work session.'}</Typography>
+        <Typography sx={{whiteSpace: 'pre-wrap', overflowWrap: 'anywhere'}}>{data.returnNote || 'Leave an optional note for your next work session.'}</Typography>
         {chosenIssue && <Typography><strong>Focus issue next action:</strong> {chosenIssue.nextAction}</Typography>}
         {!archived && <Button sx={{alignSelf: 'start'}} onClick={() => {setEditing(true);setFocus(data.focusIssueId);}}>Edit return context</Button>}
       </>}
