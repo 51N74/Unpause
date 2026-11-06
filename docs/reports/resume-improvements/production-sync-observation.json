@@ -1,0 +1,12 @@
+{
+  "checkedAt": "2026-11-06T12:41:41.436290+00:00",
+  "beforeState": "Needs attention",
+  "syncHTTPStatus": 200,
+  "afterState": "Receiving updates",
+  "lastSyncedAt": "2026-11-06T12:41:37.823328Z",
+  "cachedCommits": 100,
+  "noDuplicateCommits": true,
+  "pauseNotePreserved": true,
+  "linksPreserved": true,
+  "actualSyncPerformed": true
+}

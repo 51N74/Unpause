@@ -27,6 +27,24 @@ Browser ใช้ compiled Go + React production bundle + PostgreSQL แยก�
 
 ## Release และผล production
 
-รอ CI ของ PR และ main ผ่านก่อน Render auto-deploy ตาม checksPass แล้วตรวจ deployment/health/migration และ UI/API จริงอีกครั้ง จะบันทึกผลหลัง deploy เมื่อเสร็จ
+- [PR #4](https://github.com/51N74/Unpause/pull/4) merge เป็น `d9036f3391ec5b05ef845c6751360f3fbee7c340`
+- [CI ของ head ล่าสุด](https://github.com/51N74/Unpause/actions/runs/42217876621) และ [CI ของ main](https://github.com/51N74/Unpause/actions/runs/42218456894) ผ่านทุกขั้นตอน รวม legacy Node API, sender, race/vet, vulnerability checks, browser และ Docker
+- Render `dep-dbmsjf0u01pc739g4fo0` Live เวลา **19:37:32 วันที่ 6 พฤศจิกายน 2026 (Asia/Bangkok)** หลัง checks ผ่าน Migration 00003 ใช้ 1.33 วินาทีและ schema เป็น 3 จำนวนเดิมก่อนสร้างข้อมูลทดสอบยังคง 6 projects / 203 cached commits
+- Production API/security **27 checks ผ่าน** ด้วยบัญชีใหม่แยก 2 บัญชี ตรวจ demo/idempotence, privacy, valid links, cross-user/cross-project rejection, unknown fields, Origin protection, archive/restore และไม่เปลี่ยน context/unread ขณะเชื่อม
+- Browser production ทวนกับประวัติจริงที่กู้แล้ว 100 commits: ตรวจ private demo, preview 5 commits, ขยาย/ยุบโดยไม่อ่านอัตโนมัติ, pause note ภาษาไทยรวมคำยาวไม่มีช่องว่าง 500 ตัว, reload, links และตัวแก้ links บน desktop/mobile ไม่มี horizontal overflow, page error หรือ HTTP 500 ในรอบที่ตรวจ
+- Health สุดท้ายตอบ HTTP 200, `status=ok`, `database=ok` และไม่พบ error-level app logs ในช่วงตรวจที่บันทึกไว้
+
+รอบเข้า Resume ครั้งแรกพบ connection เป็น Needs attention และยังไม่มี lastSyncedAt ไม่ได้เก็บ response ของต้นเหตุครั้งนั้น จึงไม่ระบุสาเหตุแน่นอน ทวน force sync แล้ว HTTP 200 และ lastSyncedAt ขยับจริง สถานะกลับ Receiving updates ได้ 100 unique cached commits โดยไม่มี SHA ซ้ำ pause note และ links คงเดิม [ผลทวน sync](reports/resume-improvements/production-sync-observation.json)
+
+[Production release/migration](reports/resume-improvements/production-release.json) · [API checks](reports/resume-improvements/production-api-result.json) · [Browser](reports/resume-improvements/production-browser-result.json) · [Health](reports/resume-improvements/production-health.json) · [Error log check](reports/resume-improvements/production-error-log-check.json) · [Desktop](reports/resume-improvements/production-desktop.png) · [Mobile](reports/resume-improvements/production-mobile.png)
+
+## ขอบเขตและข้อจำกัด
+
+npm audit 0 vulnerabilities; govulncheck 0 vulnerabilities affecting code/imported packages และยังมี module-only advisory เดิม 1 รายการใน module ที่ระบบไม่เรียกใช้ [ผล Go scan](reports/resume-improvements/go-vulnerability-check.txt) ผลนี้ไม่ใช่ load test หรือ penetration test ทุกช่องทาง
+
+รอบ production ใช้ metadata ของ 8 commits จริงจาก public GitHub API แล้วส่ง POST ด้วย integration credential ของโปรเจกต์ทดสอบ เป็น manual authenticated smoke test ไม่ใช่การรัน sender Actions ของ forum รอบใหม่ GitHub Actions ที่ตรวจรอบนี้คือ CI ของ Unpause ไม่มีการแก้ repo, workflow, secret หรือ variable ใน panstr-webboard-forum การเชื่อมต่อที่ตั้งครบแล้วใช้ protocol/secret เดิมต่อได้
+
+การแสดง 5 commits เป็นการย่อหน้าจอ ข้อมูลยังมาจาก cache สูงสุด 20 กลุ่มเดิม Public GitHub quota/upstream availability ยังจำกัด catch-up ได้ และประวัติที่เก็บไม่รับประกันว่าครบทั้ง repository เดโมไม่มี integration secret หรือ commit ปลอมติดตั้งอัตโนมัติ ต้องเชื่อม public repo ของตนเองตามขั้นตอนปกติ
+
 
 Rollback โค้ดไม่ย้อน schema/data ตาราง links เป็น additive จึงคงไว้เมื่อย้อนโค้ด ไม่รัน migration down เพื่อลบข้อมูลที่อาจเริ่มใช้งาน
