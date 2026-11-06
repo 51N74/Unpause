@@ -55,10 +55,11 @@ type FocusIssue struct {
 	NextAction string `json:"nextAction"`
 }
 type View struct {
-	FocusIssue   *FocusIssue `json:"focusIssue"`
-	Connection   *Connection `json:"connection"`
-	Activity     []Activity  `json:"activity"`
-	Unread       int         `json:"unread"`
-	Note         string      `json:"returnNote"`
-	FocusIssueID *string     `json:"focusIssueId"`
+	Links        []CommitLink `json:"links"`
+	FocusIssue   *FocusIssue  `json:"focusIssue"`
+	Connection   *Connection  `json:"connection"`
+	Activity     []Activity   `json:"activity"`
+	Unread       int          `json:"unread"`
+	Note         string       `json:"returnNote"`
+	FocusIssueID *string      `json:"focusIssueId"`
 }

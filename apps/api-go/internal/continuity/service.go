@@ -153,7 +153,7 @@ func (s *Service) View(ctx context.Context, user, project string) (View, error) 
 	if err != nil {
 		return View{}, err
 	}
-	v := View{Activity: make([]Activity, 0)}
+	v := View{Activity: make([]Activity, 0), Links: make([]CommitLink, 0)}
 	var title, nextAction *string
 	err = s.pool.QueryRow(ctx, `SELECT c.note,c.focus_issue_id,i."title",i."nextAction" FROM project_return_context c LEFT JOIN "Issue" i ON i."id"=c.focus_issue_id AND i."projectId"=c.project_id WHERE c.project_id=$1`, project).Scan(&v.Note, &v.FocusIssueID, &title, &nextAction)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
@@ -204,7 +204,28 @@ func (s *Service) View(ctx context.Context, user, project string) (View, error) 
 	}
 	rows.Close()
 	err = s.pool.QueryRow(ctx, `SELECT count(*) FROM git_delivery d WHERE connection_id=$1 AND sequence>$2 AND sequence<=$3 AND EXISTS(SELECT 1 FROM git_activity a WHERE a.connection_id=d.connection_id AND a.delivery_id=d.delivery_id)`, r.ID, r.ReviewedSequence, r.Sequence).Scan(&v.Unread)
-	return v, err
+	if err != nil {
+		return v, err
+	}
+	shas := make([]string, 0)
+	for _, group := range v.Activity {
+		for _, commit := range group.Commits {
+			shas = append(shas, commit.SHA)
+		}
+	}
+	links, err := s.pool.Query(ctx, `SELECT l.sha,l.issue_id,l.decision_id,i."title",d."decision" FROM git_activity_link l LEFT JOIN "Issue" i ON i."id"=l.issue_id AND i."projectId"=$3 LEFT JOIN "DecisionRecord" d ON d."id"=l.decision_id AND d."projectId"=$3 WHERE l.connection_id=$1 AND l.sha=ANY($2::text[]) AND (l.issue_id IS NOT NULL OR l.decision_id IS NOT NULL)`, r.ID, shas, project)
+	if err != nil {
+		return v, err
+	}
+	defer links.Close()
+	for links.Next() {
+		var link CommitLink
+		if err = links.Scan(&link.SHA, &link.IssueID, &link.DecisionID, &link.IssueTitle, &link.DecisionTitle); err != nil {
+			return v, err
+		}
+		v.Links = append(v.Links, link)
+	}
+	return v, links.Err()
 }
 func (s *Service) ReturnContext(ctx context.Context, user, project, note string, focus *string) error {
 	if len([]rune(note)) > 5000 {

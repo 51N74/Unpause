@@ -52,6 +52,9 @@ export const authApi = {
 };
 
 export const projectsApi = {
+  async demo(): Promise<{project: Project}> {
+    return (await apiClient.post<{project: Project}>('/projects/demo')).data;
+  },
   async list(params?: {
     search?: string;
     status?: ProjectStatus | 'All';

@@ -127,6 +127,7 @@ func NewEngine(deps *Dependencies) *gin.Engine {
 
 			// Projects
 			protected.GET("/projects", projHandler.List)
+			protected.POST("/projects/demo", middleware.AuthRateLimitMiddleware(10, time.Minute), projHandler.Demo)
 			protected.POST("/projects", projHandler.Create)
 			protected.GET("/projects/:projectId", projHandler.GetByID)
 			protected.PATCH("/projects/:projectId", projHandler.Update)
@@ -173,6 +174,7 @@ func NewEngine(deps *Dependencies) *gin.Engine {
 			protected.POST("/projects/:projectId/github/rotate", continuityHandler.Rotate)
 			protected.POST("/projects/:projectId/github/sync", continuityHandler.Sync)
 			protected.POST("/projects/:projectId/github/review", continuityHandler.Review)
+			protected.PUT("/projects/:projectId/github/commits/:sha/link", continuityHandler.LinkCommit)
 			protected.PUT("/projects/:projectId/return-context", continuityHandler.ReturnContext)
 
 			// GitHub Explorer

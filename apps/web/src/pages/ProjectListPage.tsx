@@ -73,6 +73,14 @@ export const ProjectListPage: React.FC = () => {
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+  const demoMutation = useMutation({
+    mutationFn: () => projectsApi.demo(),
+    onSuccess: ({project}) => {
+      void queryClient.invalidateQueries({queryKey: ['projects']});
+      navigate(`/projects/${project.id}/resume`);
+    },
+    onError: (err) => setFeedbackMessage(extractApiError(err).message),
+  });
 
   const projectsQuery = useQuery({
     queryKey: ['projects', { search: searchInput.trim(), status: statusFilter }],
@@ -174,6 +182,10 @@ export const ProjectListPage: React.FC = () => {
             start a new project with Scope v1.
           </Typography>
         </Box>
+        <Stack direction="row" spacing={1} flexWrap="wrap">
+        <Button variant="outlined" disabled={demoMutation.isPending} onClick={() => demoMutation.mutate()}>
+          Open my demo
+        </Button>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
@@ -185,6 +197,7 @@ export const ProjectListPage: React.FC = () => {
         >
           New Project
         </Button>
+        </Stack>
       </Stack>
 
       <Paper

@@ -57,6 +57,7 @@ Unpause keeps Scope, Decisions and next actions authored by the owner, and can d
 - **Scope Timeline View (`/projects/:projectId/timeline`):**
   - Displays all scope versions chronologically alongside the decision records recorded while each scope version was active.
 - **GitHub Continuity in Resume:**
+  - Shows five latest cached commits with expandable details, pause notes, owner-only demo projects, and explicit links to project Issues/Decisions. See the [Resume update guide](docs/UNPAUSE_RESUME_IMPROVEMENTS_TH.md).
   - Connect one public repository and its configured default branch, install a GitHub Actions sender with a per-connection secret, and receive grouped commits without an open browser session.
   - Includes bounded retries, idempotent ingestion, public API catch-up, explicit unread review markers, a return note and a focus issue. Archived projects pause ingestion; unlinking revokes the credential and removes integration cache.
   - Public GitHub quotas can temporarily block catch-up while Actions delivery continues. See the [setup guide](docs/UNPAUSE_GITHUB_CONTINUITY_SETUP_TH.md), [live staging verification](docs/UNPAUSE_STAGING_LIVE_VERIFICATION_TH.md), and [production rollout](docs/UNPAUSE_PRODUCTION_ROLLOUT_TH.md).

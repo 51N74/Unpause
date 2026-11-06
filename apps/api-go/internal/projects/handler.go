@@ -43,6 +43,14 @@ func (h *Handler) List(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"projects": projects})
 }
+func (h *Handler) Demo(c *gin.Context) {
+	project, err := h.service.Demo(c.Request.Context(), middleware.GetAuthenticatedUserID(c))
+	if err != nil {
+		middleware.RespondError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"project": project})
+}
 
 func (h *Handler) Create(c *gin.Context) {
 	userID := middleware.GetAuthenticatedUserID(c)
