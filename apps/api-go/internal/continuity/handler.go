@@ -99,6 +99,18 @@ func (h *Handler) Sync(c *gin.Context) {
 	u, p := owner(c)
 	respond(c, gin.H{"ok": true}, h.service.Sync(c.Request.Context(), u, p, req.Force))
 }
+func (h *Handler) LinkCommit(c *gin.Context) {
+	var req struct {
+		IssueID    *string `json:"issueId"`
+		DecisionID *string `json:"decisionId"`
+	}
+	if err := decode(c, &req); err != nil {
+		respond(c, nil, err)
+		return
+	}
+	u, p := owner(c)
+	respond(c, gin.H{"ok": true}, h.service.LinkCommit(c.Request.Context(), u, p, c.Param("sha"), req.IssueID, req.DecisionID))
+}
 func (h *Handler) Ingest(c *gin.Context) {
 	var req Delivery
 	if err := decode(c, &req); err != nil {

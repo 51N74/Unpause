@@ -7,12 +7,16 @@ export interface GitConnection {
   sequence: number; reviewedSequence: number;
 }
 export interface ContinuityView {
+  links?: {sha: string; issueId: string | null; decisionId: string | null; issueTitle?: string | null; decisionTitle?: string | null}[];
   focusIssue?: {id: string; title: string; nextAction: string} | null;
   connection: GitConnection | null; returnNote: string; focusIssueId: string | null; unread: number;
   activity: { deliveryId: string; sequence: number; source: string; eventAt: string; receivedAt: string; commits: GitCommit[] }[];
 }
 const path = (id: string) => `/projects/${id}/github`;
 export const continuityApi = {
+  link: async (id: string, sha: string, issueId: string | null, decisionId: string | null) => {
+    await apiClient.put(`${path(id)}/commits/${sha}/link`, {issueId, decisionId});
+  },
   view: async (id: string) => (await apiClient.get<ContinuityView>(path(id))).data,
   connect: async (id: string, url: string) => (await apiClient.post<{connection: GitConnection; secret: string}>(path(id), {url})).data,
   rotate: async (id: string) => (await apiClient.post<{secret: string}>(`${path(id)}/rotate`)).data,

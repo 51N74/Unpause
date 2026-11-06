@@ -30,7 +30,9 @@ describe('GitHub Resume continuity', () => {
     await act(async () => {await client.invalidateQueries({queryKey: ['project', 'project-1', 'github']});});
     expect(read.mock.calls.length).toBeGreaterThan(1);
     expect(review).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', {name: 'Mark updates as reviewed'}));
+    fireEvent.click(screen.getByRole('button', {name: 'Mark all updates as reviewed'}));
+    expect(review).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', {name: 'Confirm review all'}));
     await waitFor(() => expect(review).toHaveBeenCalledWith('project-1', 'connection-1', 3));
   });
   it('polls visible activity after 20 seconds and preserves the review marker', async () => {
@@ -56,7 +58,7 @@ describe('GitHub Resume continuity', () => {
     mount();
     await screen.findByText('GitHub unavailable');
     expect(screen.getByText('Test expired sessions next')).toBeInTheDocument();
-    expect(screen.getByText(/<script>malicious/)).toBeInTheDocument();
+    expect(screen.getAllByText(/<script>malicious/).length).toBeGreaterThan(0);
   });
   it('disables all writes and automatic catch-up while archived', async () => {
     vi.spyOn(continuityApi, 'view').mockResolvedValue(structuredClone(view));
@@ -84,4 +86,52 @@ describe('GitHub Resume continuity', () => {
     await waitFor(() => expect(save).toHaveBeenCalledWith('project-1', 'Next: check expiry', null));
     expect(review).not.toHaveBeenCalled();
   });
+});
+
+describe('Compact commits and pause handoff', () => {
+  it('shows five newest commits, expands without reviewing, and collapses again', async () => {
+    const v=structuredClone(view);
+    v.activity[0].commits=Array.from({length:12},(_,i)=>({sha:i.toString(16).padStart(40,'0'),message:'Change '+i,author:'Dev',eventAt:new Date(Date.UTC(2026,0,i+1)).toISOString()}));
+    vi.spyOn(continuityApi,'view').mockResolvedValue(v);vi.spyOn(continuityApi,'sync').mockResolvedValue();
+    const review=vi.spyOn(continuityApi,'review').mockResolvedValue();
+    mount();await screen.findByText('Latest commits');
+    expect(screen.getAllByTestId('commit-row')).toHaveLength(5);
+    expect(screen.getAllByTestId('commit-row')[0]).toHaveTextContent('Change 11');
+    fireEvent.click(screen.getByRole('button',{name:'Show 5 more commits'}));
+    expect(screen.getAllByTestId('commit-row')).toHaveLength(10);
+    expect(review).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button',{name:'Show latest 5'}));
+    expect(screen.getAllByTestId('commit-row')).toHaveLength(5);
+  });
+  it('saves a structured pause note, keeps focus and does not acknowledge activity', async () => {
+    vi.spyOn(continuityApi,'view').mockResolvedValue({...structuredClone(view),focusIssueId:'focus-1'});
+    vi.spyOn(continuityApi,'sync').mockResolvedValue();
+    const save=vi.spyOn(continuityApi,'saveContext').mockResolvedValue();const review=vi.spyOn(continuityApi,'review').mockResolvedValue();
+    mount();fireEvent.click(await screen.findByRole('button',{name:'Pause work'}));
+    expect(screen.getByRole('button',{name:'Save pause note'})).toBeDisabled();
+    fireEvent.change(screen.getByLabelText('Where I stopped',{exact:false}),{target:{value:'UI complete'}});
+    fireEvent.change(screen.getByLabelText('Next action when I return',{exact:false}),{target:{value:'Check mobile'}});
+    fireEvent.click(screen.getByRole('button',{name:'Save pause note'}));
+    await waitFor(()=>expect(save).toHaveBeenCalledWith('project-1','Where I stopped: UI complete\nBlockers: None recorded\nNext action: Check mobile','focus-1'));
+    expect(review).not.toHaveBeenCalled();await screen.findByText(/Pause note saved/);
+  });
+  it('keeps the pause draft open on save failure', async () => {
+    vi.spyOn(continuityApi,'view').mockResolvedValue(structuredClone(view));vi.spyOn(continuityApi,'sync').mockResolvedValue();
+    vi.spyOn(continuityApi,'saveContext').mockRejectedValue(new Error('Save unavailable'));
+    mount();fireEvent.click(await screen.findByRole('button',{name:'Pause work'}));
+    fireEvent.change(screen.getByLabelText('Where I stopped',{exact:false}),{target:{value:'Draft'}});
+    fireEvent.change(screen.getByLabelText('Next action when I return',{exact:false}),{target:{value:'Retry'}});
+    fireEvent.click(screen.getByRole('button',{name:'Save pause note'}));
+    await screen.findByText('Save unavailable');expect(screen.getByLabelText('Where I stopped',{exact:false})).toHaveValue('Draft');
+  });
+});
+
+it('review confirmation retains its original snapshot when a new update arrives', async () => {
+ const read=vi.spyOn(continuityApi,'view').mockResolvedValue(structuredClone(view));vi.spyOn(continuityApi,'sync').mockResolvedValue();
+ const review=vi.spyOn(continuityApi,'review').mockResolvedValue();const {client}=mount();
+ fireEvent.click(await screen.findByRole('button',{name:'Mark all updates as reviewed'}));
+ const newer=structuredClone(view);newer.connection!.sequence=7;read.mockResolvedValue(newer);
+ await act(async()=>{await client.invalidateQueries({queryKey:['project','project-1','github']});});
+ fireEvent.click(screen.getByRole('button',{name:'Confirm review all'}));
+ await waitFor(()=>expect(review).toHaveBeenCalledWith('project-1','connection-1',3));
 });
